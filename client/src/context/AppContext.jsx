@@ -7,20 +7,22 @@ import toast from "react-hot-toast";
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {
-
-  const currency = import.meta.env.VITE_CURRENCY
+  const currency = import.meta.env.VITE_CURRENCY;
 
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [isSeller, setIsSeller] = useState(false);
-  const [showUserLogin, setShowUserLogin] = useState(false);
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Fetch AlL Products
   const fetchProducts = async () => {
-    setProducts(dummyProducts)
-  }
+    setProducts(dummyProducts);
+  };
+
+  // Get unique categories
+  const categories = ['all', ...new Set(products.map(product => product.category))];
 
   // Add Product To Cart
   const addToCart = (itemId) => {
@@ -32,16 +34,16 @@ export const AppContextProvider = ({ children }) => {
       cartData[itemId] = 1;
     }
     setCartItems(cartData);
-    toast.success("Added to cart")
-  }
+    toast.success("Added to cart");
+  };
 
   // Update Cart Item Quantity
   const updateCartItem = (itemId, quantity) => {
     let cartData = structuredClone(cartItems);
     cartData[itemId] = quantity;
     setCartItems(cartData);
-    toast.success("Quantity updated")
-  }
+    toast.success("Quantity updated");
+  };
 
   // Remove Product From Cart
   const removeFromCart = (itemId) => {
@@ -52,21 +54,34 @@ export const AppContextProvider = ({ children }) => {
         delete cartData[itemId];
       }
     }
-    toast.success("Removed from cart")
+    toast.success("Removed from cart");
     setCartItems(cartData);
-  }
+  };
 
   useEffect(() => {
     fetchProducts();
-  }, [])
+  }, []);
 
-  const value = { navigate, user, setUser, isSeller, setIsSeller, showUserLogin, setShowUserLogin, products, currency, addToCart, updateCartItem, removeFromCart, cartItems }
+  const value = {
+    navigate,
+    isSeller,
+    setIsSeller,
+    products,
+    currency,
+    addToCart,
+    updateCartItem,
+    removeFromCart,
+    cartItems,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    categories,
+   };
 
-  return <AppContext.Provider value={value}>
-    {children}
-  </AppContext.Provider>;
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = () => {
   return useContext(AppContext);
-}
+};
