@@ -6,30 +6,7 @@ import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-reac
 import PropTypes from 'prop-types'
 import ErrorBoundary from './ErrorBoundary'
 
-const SearchBar = memo(() => {
-    const { searchQuery, setSearchQuery } = useAppContext()
 
-    const handleSearch = useCallback((e) => {
-        const sanitizedValue = e.target.value.replace(/[<>]/g, '')
-        setSearchQuery(sanitizedValue)
-    }, [setSearchQuery])
-
-    return (
-        <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
-            <input 
-                className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500"
-                type="search"
-                placeholder="Search products"
-                value={searchQuery}
-                onChange={handleSearch}
-                aria-label="Search products"
-            />
-            <img src={assets.search_icon} alt="search" className='w-4 h-4' />
-        </div>
-    )
-})
-
-SearchBar.displayName = 'SearchBar'
 
 const CartButton = memo(({ navigate, cartCount }) => {
     const handleCartClick = useCallback((e) => {
@@ -38,8 +15,8 @@ const CartButton = memo(({ navigate, cartCount }) => {
     }, [navigate])
 
     return (
-        <div 
-            onClick={handleCartClick} 
+        <div
+            onClick={handleCartClick}
             className="relative cursor-pointer"
             role="button"
             tabIndex={0}
@@ -61,20 +38,19 @@ CartButton.propTypes = {
 CartButton.displayName = 'CartButton'
 
 const DesktopMenu = memo(({ navigate, cartCount }) => (
-    <div className="hidden sm:flex items-center gap-8">
-        <NavLink to='/' aria-label="Home">Home</NavLink>
-        <NavLink to='/products' aria-label="All Products">All Products</NavLink>
+    <div className="hidden sm:flex items-center gap-3 md:gap-4 lg:gap-6">
+        <NavLink to='/products' className="whitespace-nowrap" aria-label="All Products">All Products</NavLink>
         <SignedIn>
-            <NavLink to='/my-orders' aria-label="My Orders">My Orders</NavLink>
+            <NavLink to='/my-orders' className="whitespace-nowrap" aria-label="My Orders">My Orders</NavLink>
         </SignedIn>
-        <NavLink to='/contact' aria-label="Contact">Contact</NavLink>
-        <SearchBar />
+        <NavLink to='/contact' className="whitespace-nowrap" aria-label="Contact">Contact</NavLink>
+
         <CartButton navigate={navigate} cartCount={cartCount} />
-        
+
         <SignedOut>
             <div className='flex items-center gap-4'>
                 <SignInButton mode="modal">
-                    <button 
+                    <button
                         className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition text-white rounded-full"
                         aria-label="Login"
                     >
@@ -101,37 +77,30 @@ const MobileMenu = memo(({ open, setOpen }) => {
     const handleClose = useCallback(() => setOpen(false), [setOpen])
 
     return open ? (
-        <div 
+        <div
             className="absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex flex-col items-start gap-4 px-5 text-sm md:hidden z-50"
             role="dialog"
             aria-modal="true"
             aria-label="Mobile menu"
         >
-            <NavLink 
-                to='/' 
-                onClick={handleClose}
-                className="w-full hover:text-primary transition-colors"
-            >
-                Home
-            </NavLink>
-            <NavLink 
-                to='/products' 
+            <NavLink
+                to='/products'
                 onClick={handleClose}
                 className="w-full hover:text-primary transition-colors"
             >
                 All Products
             </NavLink>
             <SignedIn>
-                <NavLink 
-                    to='/my-orders' 
+                <NavLink
+                    to='/my-orders'
                     onClick={handleClose}
                     className="w-full hover:text-primary transition-colors"
                 >
                     My Orders
                 </NavLink>
             </SignedIn>
-            <NavLink 
-                to='/contact' 
+            <NavLink
+                to='/contact'
                 onClick={handleClose}
                 className="w-full hover:text-primary transition-colors"
             >
@@ -141,8 +110,8 @@ const MobileMenu = memo(({ open, setOpen }) => {
             <SignedOut>
                 <div className='flex flex-col gap-2 w-full mt-2'>
                     <SignInButton mode="modal">
-                        <button 
-                            onClick={handleClose} 
+                        <button
+                            onClick={handleClose}
                             className="w-full px-6 py-2.5 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm font-medium"
                         >
                             Login
@@ -152,11 +121,11 @@ const MobileMenu = memo(({ open, setOpen }) => {
             </SignedOut>
 
             <SignedIn>
-                <UserButton 
+                <UserButton
                     signOutUrl='/'
                 >
-                    <button 
-                        onClick={handleClose} 
+                    <button
+                        onClick={handleClose}
                         className="w-full px-6 py-2.5 mt-2 bg-red-500 hover:bg-red-600 transition text-white rounded-full text-sm font-medium"
                     >
                         Logout
@@ -193,9 +162,9 @@ const Navbar = () => {
 
                 <DesktopMenu navigate={navigate} cartCount={cartCount} />
 
-                <button 
-                    onClick={toggleMenu} 
-                    aria-label={open ? "Close menu" : "Open menu"} 
+                <button
+                    onClick={toggleMenu}
+                    aria-label={open ? "Close menu" : "Open menu"}
                     className="sm:hidden"
                 >
                     <img src={assets.menu_icon} alt={open ? "Close menu" : "Open menu"} />
