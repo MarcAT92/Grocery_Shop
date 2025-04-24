@@ -7,7 +7,7 @@ import ProductCard from '../components/ProductCard';
 
 const ProductDetails = () => {
 
-    const { products, navigate, currency, addToCart } = useAppContext();
+    const { products, navigate, currency, addToCart, removeFromCart, cartItems } = useAppContext();
     const { id } = useParams();
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [thumbnail, setThumbnail] = useState(null);
@@ -74,9 +74,21 @@ const ProductDetails = () => {
                     </ul>
 
                     <div className="flex items-center mt-10 gap-4 text-base">
-                        <button onClick={() => addToCart(product._id)} className="w-full py-3.5 cursor-pointer font-medium bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition" >
-                            Add to Cart
-                        </button>
+                        {!cartItems[product?._id] ? (
+                            <button onClick={() => addToCart(product._id)} className="w-full py-3.5 cursor-pointer font-medium bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition" >
+                                Add to Cart
+                            </button>
+                        ) : (
+                            <div className="flex items-center justify-center gap-1.5 md:gap-2 w-full h-[50px] bg-primary/25 rounded select-none">
+                                <button onClick={() => { removeFromCart(product._id) }} className="cursor-pointer text-xl px-4 h-full" >
+                                    -
+                                </button>
+                                <span className="w-5 text-center text-lg md:text-xl">{cartItems[product._id]}</span>
+                                <button onClick={() => { addToCart(product._id) }} className="cursor-pointer text-xl px-4 h-full" >
+                                    +
+                                </button>
+                            </div>
+                        )}
                         <button onClick={() => { addToCart(product._id); navigate("/cart") }} className="w-full py-3.5 cursor-pointer font-medium bg-primary text-white hover:bg-primary-dull transition" >
                             Buy now
                         </button>

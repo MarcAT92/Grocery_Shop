@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
 import ProductCategory from "./pages/ProductCategory";
+import Cart from "./pages/Cart";
 
 
 // Lazy load route components
@@ -64,6 +65,7 @@ const App = () => {
               <Route path="/products" element={<AllProduct />} />
               <Route path="/products/:category" element={<ProductCategory />} />
               <Route path="/products/:category/:id" element={<ProductDetails />} />
+              <Route path="/cart" element={<Cart />} />
             </Routes>
           </Suspense>
         )}

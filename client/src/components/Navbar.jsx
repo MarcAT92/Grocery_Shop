@@ -121,16 +121,9 @@ const MobileMenu = memo(({ open, setOpen }) => {
             </SignedOut>
 
             <SignedIn>
-                <UserButton
-                    signOutUrl='/'
-                >
-                    <button
-                        onClick={handleClose}
-                        className="w-full px-6 py-2.5 mt-2 bg-red-500 hover:bg-red-600 transition text-white rounded-full text-sm font-medium"
-                    >
-                        Logout
-                    </button>
-                </UserButton>
+                <div className="w-full">
+                    <UserButton signOutUrl='/' />
+                </div>
             </SignedIn>
         </div>
     ) : null
@@ -138,16 +131,16 @@ const MobileMenu = memo(({ open, setOpen }) => {
 
 MobileMenu.propTypes = {
     open: PropTypes.bool.isRequired,
-    setOpen: PropTypes.func.isRequired,
-    cartCount: PropTypes.number.isRequired
+    setOpen: PropTypes.func.isRequired
+    // Removed navigate and cartCount as they are not directly used or passed down further
 }
 
 MobileMenu.displayName = 'MobileMenu'
 
 const Navbar = () => {
     const [open, setOpen] = useState(false)
-    const { navigate, cartItems } = useAppContext()
-    const cartCount = Object.values(cartItems).reduce((a, b) => a + b, 0)
+    const { navigate, getCartItemCount } = useAppContext()
+    const cartCount = getCartItemCount()
 
     const toggleMenu = useCallback(() => {
         setOpen(prev => !prev)
@@ -162,15 +155,19 @@ const Navbar = () => {
 
                 <DesktopMenu navigate={navigate} cartCount={cartCount} />
 
-                <button
-                    onClick={toggleMenu}
-                    aria-label={open ? "Close menu" : "Open menu"}
-                    className="sm:hidden"
-                >
-                    <img src={assets.menu_icon} alt={open ? "Close menu" : "Open menu"} />
-                </button>
+                {/* Mobile Icons: Cart and Menu Toggle */}
+                <div className="sm:hidden flex items-center gap-5"> {/* Reduced gap */}
+                    <CartButton navigate={navigate} cartCount={cartCount} />
+                    <button
+                        onClick={toggleMenu}
+                        aria-label={open ? "Close menu" : "Open menu"}
+                        className="p-1" /* Added padding for easier clicking */
+                    >
+                        <img src={assets.menu_icon} alt={open ? "Close menu" : "Open menu"} className="w-6 h-6" /> {/* Explicit size */}
+                    </button>
+                </div>
 
-                <MobileMenu open={open} setOpen={setOpen} cartCount={cartCount} />
+                <MobileMenu open={open} setOpen={setOpen} />
             </nav>
         </ErrorBoundary>
     )
