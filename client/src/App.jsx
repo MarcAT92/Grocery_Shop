@@ -5,10 +5,16 @@ import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
+import ProductCategory from "./pages/ProductCategory";
+import Cart from "./pages/Cart";
+import AddAddress from "./pages/AddAddress";
+import MyOrders from "./pages/MyOrders";
+
 
 // Lazy load route components
 const Home = React.lazy(() => import("./pages/Home"));
 const AllProduct = React.lazy(() => import("./pages/AllProduct"));
+const ProductDetails = React.lazy(() => import("./pages/ProductDetails"));
 
 const App = () => {
   const location = useLocation();
@@ -41,17 +47,16 @@ const App = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {!isSellerPath && <Navbar />}
-      <Toaster 
+      <Toaster
         position="top-center"
         toastOptions={{
           duration: 3000,
           style: { maxWidth: '500px' }
-        }} 
+        }}
       />
       <main
-        className={`${
-          isSellerPath ? "" : "py-12 px-6 md-px16 lg-px-24 xl:px-32"
-        } relative flex-grow min-h-[calc(100vh-200px)]`}
+        className={`${isSellerPath ? "" : "py-12 px-6 md-px16 lg-px-24 xl:px-32"
+          } relative flex-grow min-h-[calc(100vh-200px)]`}
       >
         {isTransitioning ? (
           <Loader />
@@ -60,6 +65,11 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<AllProduct />} />
+              <Route path="/products/:category" element={<ProductCategory />} />
+              <Route path="/products/:category/:id" element={<ProductDetails />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/add-address" element={<AddAddress />} />
+              <Route path="/my-orders" element={<MyOrders />} />
             </Routes>
           </Suspense>
         )}
