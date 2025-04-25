@@ -54,7 +54,7 @@ const DesktopMenu = memo(({ navigate, cartCount }) => (
                         className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition text-white rounded-full"
                         aria-label="Login"
                     >
-                        Login
+                        Sign in
                     </button>
                 </SignInButton>
             </div>
@@ -114,7 +114,7 @@ const MobileMenu = memo(({ open, setOpen }) => {
                             onClick={handleClose}
                             className="w-full px-6 py-2.5 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm font-medium"
                         >
-                            Login
+                            Sign in
                         </button>
                     </SignInButton>
                 </div>
