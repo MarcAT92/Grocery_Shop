@@ -5,6 +5,12 @@ import { useAppContext } from '../context/AppContext'
 const Categories = () => {
 
     const { navigate } = useAppContext();
+    const handleCategoryClick = (categoryPath) => {
+        if (window.location.pathname !== `/products/${categoryPath.toLowerCase()}`) {
+            navigate(`/products/${categoryPath.toLowerCase()}`);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         < div className='mt-16' >
@@ -14,10 +20,7 @@ const Categories = () => {
                 {categories.map((category, index) => (
                     <div key={index} className='group cursor-pointer py-5 px-3 gap-2 rounded:lg flex flex-col justify-center items-center'
                         style={{ backgroundColor: category.bgColor }}
-                        onClick={() => {
-                            navigate(`/products/${category.path.toLowerCase()}`)
-                            scrollTo(0, 0);
-                        }}
+                        onClick={() => handleCategoryClick(category.path)}
                     >
                         <img src={category.image} alt={category.text} className='group-hover:scale-108 transition max-w-28' />
                         <p className='text-sm font-medium'>{category.text}</p>
