@@ -65,37 +65,7 @@ export const adminLogin = async (req, res) => {
     }
 };
 
-// @desc    Get admin profile
-// @route   GET /api/admin/profile
-// @access  Private (Admin only)
-export const getAdminProfile = async (req, res) => {
-    try {
-        const admin = await Admin.findById(req.admin._id);
 
-        if (admin) {
-            res.json({
-                success: true,
-                admin: {
-                    _id: admin._id,
-                    name: admin.name,
-                    email: admin.email
-                }
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                message: 'Admin not found'
-            });
-        }
-    } catch (error) {
-        console.error('Get admin profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error fetching admin profile',
-            error: error.message
-        });
-    }
-};
 
 // @desc    Admin logout
 // @route   POST /api/admin/logout

@@ -14,10 +14,7 @@ npm install
 MONGODB_URI="your_mongodb_connection_string"
 CLERK_SECRET_KEY="your_clerk_secret_key"
 
-# Admin credentials (used to create initial admin user)
-ADMIN_NAME="Admin User"
-ADMIN_EMAIL="admin@example.com"
-ADMIN_PASSWORD="admin123"
+# JWT Secret for admin authentication
 JWT_SECRET="your_jwt_secret_key"
 ```
 
@@ -50,7 +47,6 @@ This runs the server without nodemon.
 
 - `POST /api/admin/login` - Admin login
 - `POST /api/admin/logout` - Admin logout
-- `GET /api/admin/profile` - Get admin profile (protected route)
 
 ## Authentication
 
@@ -62,9 +58,9 @@ Protected user routes use the `verifyAuth` middleware to verify the Clerk token 
 
 ### Admin Authentication
 
-Admin authentication is handled by the backend using JWT tokens. When the server starts, it automatically creates an initial admin user if none exists, using the credentials specified in the `.env` file.
+Admin authentication is handled by the backend using JWT tokens. Admin users are created using the admin management scripts (see below).
 
-Protected admin routes use the `protectAdmin` middleware to verify the JWT token and load the admin from MongoDB.
+The system includes a `protectAdmin` middleware that can be used to protect admin routes by verifying the JWT token and loading the admin from MongoDB, though it's not currently used in any routes.
 
 ## Admin User Management
 
