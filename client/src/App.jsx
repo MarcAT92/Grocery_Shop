@@ -12,6 +12,7 @@ import AdminLogin from "./components/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import NotFound from "./pages/NotFound";
 import { useAppContext } from "./context/AppContext";
+import ClerkIntegration from "./components/ClerkIntegration";
 
 // Lazy load route components
 const Home = React.lazy(() => import("./pages/Home"));
@@ -57,6 +58,9 @@ const App = () => {
           style: { maxWidth: '500px' }
         }}
       />
+
+      {/* Clerk Integration Component */}
+      <ClerkIntegration />
 
       {/* Use Routes component to handle all routing logic */}
       <Routes>

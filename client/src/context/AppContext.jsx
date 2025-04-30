@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { dummyProducts } from "../assets/assets";
 import toast from "react-hot-toast";
+import { isAdminLoggedIn, adminLogout } from "../utils/adminAuth";
 
 export const AppContext = createContext();
 
@@ -10,7 +11,7 @@ export const AppContextProvider = ({ children }) => {
   const currency = import.meta.env.VITE_CURRENCY;
 
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(isAdminLoggedIn());
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +20,18 @@ export const AppContextProvider = ({ children }) => {
   // Fetch AlL Products
   const fetchProducts = async () => {
     setProducts(dummyProducts);
+  };
+
+  // Admin logout function
+  const handleAdminLogout = async () => {
+    const success = await adminLogout();
+    if (success) {
+      setIsAdmin(false);
+      navigate('/');
+      toast.success("Logged out successfully");
+    } else {
+      toast.error("Logout failed");
+    }
   };
 
   // Get unique categories
@@ -113,6 +126,7 @@ export const AppContextProvider = ({ children }) => {
     selectedCategory,
     setSelectedCategory,
     categories,
+    handleAdminLogout,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext'; 
-import { useNavigate } from 'react-router-dom'; 
+import { useAppContext } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
-    const { isAdmin, setIsAdmin } = useAppContext(); 
+    const { isAdmin, setIsAdmin } = useAppContext();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -16,16 +16,31 @@ const AdminLogin = () => {
         setIsLoading(true);
         setError(null);
 
-        // Retrieve admin credentials from environment variables
-        const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-        const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+        try {
+            // Call backend API for admin login
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+            const response = await fetch(`${apiUrl}/admin/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include' // Include cookies in the request
+            });
 
-        // Basic validation (replace with more robust validation if needed)
-        if (email === adminEmail && password === adminPassword) {
-            setIsAdmin(true);
-            // Navigation is handled by the useEffect below
-        } else {
-            setError('Invalid email or password.');
+            const data = await response.json();
+
+            if (data.success) {
+                // Store token in localStorage for future requests
+                localStorage.setItem('adminToken', data.token);
+                setIsAdmin(true);
+                // Navigation is handled by the useEffect below
+            } else {
+                setError(data.message || 'Invalid email or password.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setError('An error occurred during login. Please try again.');
         }
 
         setIsLoading(false);
@@ -35,7 +50,7 @@ const AdminLogin = () => {
         if (isAdmin) {
             navigate('/admin', { replace: true }); // Navigate to /admin when isAdmin becomes true
         }
-    }, [isAdmin, navigate]); 
+    }, [isAdmin, navigate]);
 
     // Removed redundant useEffect that navigated to /admin/dashboard
 

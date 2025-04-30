@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "admin:create": "node scripts/create-admin.js",
+    "admin:list": "node scripts/list-admins.js",
+    "admin:delete": "node scripts/delete-admin.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.0",
     "multer": "^1.4.5-lts.2",
+    "node-fetch": "^3.3.2",
     "stripe": "^18.0.0"
   },
   "devDependencies": {

@@ -6,11 +6,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 
 const AdminLayout = () => {
 
-    const { setIsAdmin } = useAppContext();
-
-    const logout = () => {
-        setIsAdmin(false);
-    }
+    const { handleAdminLogout } = useAppContext();
 
     const sidebarLinks = [
         { name: "Add Product", path: "/admin", icon: assets.add_icon },
@@ -26,7 +22,7 @@ const AdminLayout = () => {
                 </Link>
                 <div className="flex items-center gap-5 text-gray-500">
                     <p>Hi! Admin</p>
-                    <button onClick={logout} className='border rounded-full text-sm px-4 py-1 cursor-pointer hover:bg-primary-dull hover:text-white transition'>Logout</button>
+                    <button onClick={handleAdminLogout} className='border rounded-full text-sm px-4 py-1 cursor-pointer hover:bg-primary-dull hover:text-white transition'>Logout</button>
                 </div>
             </div>
             <div className='flex'>
@@ -34,7 +30,7 @@ const AdminLayout = () => {
                     {sidebarLinks.map((item) => (
                         <NavLink to={item.path} key={item.name} end={item.path === "/admin" ? true : false}
                             activeClassName="border-r-4 md:border-r-[6px] bg-primary/10 border-primary text-primary"
-                            className={({ isActive }) => `flex items-center py-3 px-4 gap-3 
+                            className={({ isActive }) => `flex items-center py-3 px-4 gap-3
                             ${isActive ? "border-r-4 md:border-r-[6px] bg-primary/10 border-primary text-primary"
                                     : "hover:bg-gray-100/90 border-white"
                                 }`
