@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { useParams, Link } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import ProductCard from '../components/ProductCard';
+import Loader from '../components/Loader';
 
 
 const ProductDetails = () => {
@@ -11,27 +12,80 @@ const ProductDetails = () => {
     const { id } = useParams();
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [thumbnail, setThumbnail] = useState(null);
+    const [isLoading, setIsLoading] = useState(() => {
+        // Check if we're coming from a navigation (localStorage has the loading flag)
+        const isNavigating = localStorage.getItem('productDetailsLoading') === 'true';
+        return isNavigating || true; // Default to true for initial load
+    });
 
     const product = products.find((item) => item._id === id);
 
     useEffect(() => {
-        if (products.length > 0) {
-            let productsCopy = products.slice();
-            productsCopy = productsCopy.filter((item) => product.category === item.category)
-            setRelatedProducts(productsCopy.slice(0, 5));
-        }
-    }, [products]);
+        // Clear the loading flag from localStorage
+        localStorage.removeItem('productDetailsLoading');
+
+        // Set loading state
+        setIsLoading(true);
+
+        // Add a minimum loading time for better UX
+        const minLoadingTime = setTimeout(() => {
+            if (products.length > 0) {
+                // If we have products but no matching product, still set loading to false
+                if (!product) {
+                    setIsLoading(false);
+                    return;
+                }
+
+                // If we have the product, get related products
+                let productsCopy = products.slice();
+                productsCopy = productsCopy.filter((item) => product.category === item.category)
+                setRelatedProducts(productsCopy.slice(0, 5));
+                setIsLoading(false);
+            }
+        }, 800); // Minimum loading time of 800ms for better UX
+
+        return () => clearTimeout(minLoadingTime);
+    }, [products, product]);
 
     useEffect(() => {
         setThumbnail(product?.image[0] ? product.image[0] : null);
     }, [product])
 
-    return product && (
+    // Show loader while loading
+    if (isLoading) {
+        return <Loader text="Loading product details..." />;
+    }
+
+    // If product is not found after loading
+    if (!product) {
+        return (
+            <div className="mt-12 min-h-[60vh] flex flex-col items-center justify-center">
+                <div className="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 className="text-xl font-medium text-gray-700 mb-2">Product Not Found</h2>
+                    <p className="text-gray-500 mb-6">The product you're looking for doesn't exist or has been removed.</p>
+                </div>
+                <Link
+                    to="/products"
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Products
+                </Link>
+            </div>
+        );
+    }
+
+    return (
         <div className="mt-12">
             <p>
-                <Link to={"/"}>Home</Link> /
-                <Link to={"/products"}>Products</Link> /
-                <Link to={`/products/${product.category.toLowerCase()}`}> {product.category}</Link> /
+                <Link to={"/"} onClick={() => localStorage.setItem('productDetailsLoading', 'true')}>Home</Link> /
+                <Link to={"/products"} onClick={() => localStorage.setItem('productDetailsLoading', 'true')}>Products</Link> /
+                <Link to={`/products/${product.category.toLowerCase()}`} onClick={() => localStorage.setItem('productDetailsLoading', 'true')}> {product.category}</Link> /
                 <span className="text-primary"> {product.name}</span>
             </p>
 
@@ -89,7 +143,14 @@ const ProductDetails = () => {
                                 </button>
                             </div>
                         )}
-                        <button onClick={() => { addToCart(product._id); navigate("/cart") }} className="w-full py-3.5 cursor-pointer font-medium bg-primary text-white hover:bg-primary-dull transition" >
+                        <button
+                            onClick={() => {
+                                addToCart(product._id);
+                                localStorage.setItem('productDetailsLoading', 'true');
+                                navigate("/cart");
+                            }}
+                            className="w-full py-3.5 cursor-pointer font-medium bg-primary text-white hover:bg-primary-dull transition"
+                        >
                             Buy now
                         </button>
                     </div>
@@ -106,7 +167,16 @@ const ProductDetails = () => {
                         <ProductCard key={index} product={product} />
                     ))}
                 </div>
-                <button onClick={() => { navigate('/products'); scrollTo(0, 0) }} className='mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary hover:bg-primary/10 transition'>View More</button>
+                <button
+                    onClick={() => {
+                        localStorage.setItem('productDetailsLoading', 'true');
+                        navigate('/products');
+                        scrollTo(0, 0);
+                    }}
+                    className='mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary hover:bg-primary/10 transition'
+                >
+                    View More
+                </button>
             </div>
         </div >
     );

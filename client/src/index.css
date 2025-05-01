@@ -12,6 +12,29 @@
   --color-primary-dull: #44ae7c;
 }
 
+/* Prevent layout shifts during navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-y: scroll;
+  /* Always show scrollbar to prevent layout shifts */
+}
+
+/* Prevent content jumping during page transitions */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

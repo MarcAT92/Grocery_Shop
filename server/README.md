@@ -48,6 +48,41 @@ This runs the server without nodemon.
 - `POST /api/admin/login` - Admin login
 - `POST /api/admin/logout` - Admin logout
 
+### Cart Routes
+
+- `POST /api/cart` - Get user's cart
+- `POST /api/cart/add` - Add item to cart
+- `PUT /api/cart/update` - Update cart item quantity
+- `DELETE /api/cart/remove` - Remove item from cart
+- `DELETE /api/cart/clear` - Clear cart
+
+### Product Routes
+
+**Public Routes:**
+- `GET /api/product/list` - Get all products (with optional filtering)
+- `POST /api/product/id` - Get product by ID
+
+**Admin Routes:**
+- `POST /api/product/add` - Add a new product (protected)
+- `PUT /api/product/update` - Update a product (protected)
+- `POST /api/product/stock` - Update product stock status (protected)
+- `DELETE /api/product/delete` - Delete a product (protected)
+
+### Address Routes
+
+**All routes are protected and require authentication:**
+- `POST /api/address/add` - Add a new address
+- `POST /api/address/list` - Get all addresses for a user
+- `PUT /api/address/update` - Update an address
+- `DELETE /api/address/delete` - Delete an address
+- `PUT /api/address/set-default` - Set an address as default
+- `POST /api/address/default` - Get the default address for a user
+
+### Order Routes
+
+**All routes are protected and require authentication:**
+- `POST /api/orders/create` - Create a new order using cart items and shipping address
+
 ## Authentication
 
 ### User Authentication

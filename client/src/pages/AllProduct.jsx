@@ -2,6 +2,7 @@ import React from 'react'
 import { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext'
 import ProductCard from '../components/ProductCard';
+import Loader from '../components/Loader';
 
 const AllProduct = () => {
     const {
@@ -13,8 +14,25 @@ const AllProduct = () => {
     } = useAppContext();
 
     const [filteredProducts, setFilteredProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
+    // Initial loading effect
     useEffect(() => {
+        // Set initial loading state based on products availability
+        if (products.length === 0) {
+            setIsLoading(true);
+        } else {
+            setIsLoading(false);
+        }
+    }, [products]);
+
+    // Filter products effect
+    useEffect(() => {
+        // Only show loader when changing filters if we already have products
+        if (products.length > 0) {
+            setIsLoading(true);
+        }
+
         let filtered = products;
 
         // Apply category filter
@@ -31,7 +49,13 @@ const AllProduct = () => {
             );
         }
 
-        setFilteredProducts(filtered);
+        // Use setTimeout to ensure the loader is visible
+        const timer = setTimeout(() => {
+            setFilteredProducts(filtered);
+            setIsLoading(false);
+        }, 500); // Short delay to ensure loader is visible
+
+        return () => clearTimeout(timer);
     }, [products, searchQuery, selectedCategory]);
 
     return (
@@ -64,17 +88,25 @@ const AllProduct = () => {
                         </div>
                     </div>
 
-                    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6'>
-                        {filteredProducts
-                            .filter((product) => product.inStock)
-                            .map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                />
-                            ))
-                        }
-                    </div>
+                    {isLoading ? (
+                        <Loader text="Loading products..." />
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            <p>No products found matching your criteria.</p>
+                        </div>
+                    ) : (
+                        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6'>
+                            {filteredProducts
+                                .filter((product) => product.inStock)
+                                .map((product) => (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                    />
+                                ))
+                            }
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

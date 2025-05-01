@@ -98,6 +98,7 @@ export const assets = {
   bottom_banner_image_sm,
   add_address_iamge,
   box_icon,
+  placeholder_image: 'https://via.placeholder.com/150?text=No+Image',
 };
 
 export const categories = [
@@ -812,7 +813,7 @@ export const dummyOrders = [
     amount: 89,
     address: dummyAddress[0],
     status: "Order Placed",
-    paymentType: "Online",
+    paymentType: "Online Payment",
     isPaid: true,
     createdAt: "2025-03-25T07:17:46.018Z",
     updatedAt: "2025-03-25T07:18:13.103Z",
@@ -835,7 +836,7 @@ export const dummyOrders = [
     amount: 43,
     address: dummyAddress[0],
     status: "Order Placed",
-    paymentType: "COD",
+    paymentType: "Cash on Delivery",
     isPaid: false,
     createdAt: "2025-03-25T07:17:13.068Z",
     updatedAt: "2025-03-25T07:17:13.068Z",

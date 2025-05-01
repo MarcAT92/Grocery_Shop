@@ -1,29 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { assets, dummyAddress } from '../assets/assets';
+import { useAuth } from '@clerk/clerk-react';
+import { assets } from '../assets/assets';
+import toast from 'react-hot-toast';
+import Loader from '../components/Loader';
 
 const Cart = () => {
-    const { products, currency, cartItems, deleteFromCart, getCartItemCount, updateCartItem, navigate, getTotalCartAmount } = useAppContext();
+    const { products, currency, cartItems, setCartItems, deleteFromCart, getCartItemCount, updateCartItem, navigate, getTotalCartAmount } = useAppContext();
     const [cartArray, setCartArray] = useState([]);
-    const [addresses, setAddresses] = useState(dummyAddress);
-    const [showAddress, setShowAddress] = useState(false);
-    const [selectedAddress, setSelectedAddress] = useState(dummyAddress[0]);
-    const [paymentOptions, setPaymentOptions] = useState("COD");
+    const [selectedAddress, setSelectedAddress] = useState(null);
+    const { getToken, userId } = useAuth();
+    const [paymentOptions, setPaymentOptions] = useState("Cash on Delivery");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const getCart = () => {
+    // Using useCallback to memoize the getCart function
+    const getCart = useCallback(() => {
         let tempArray = []
         for (const key in cartItems) {
             const product = products.find((item) => item._id === key);
-            product.quantity = cartItems[key];
-            tempArray.push(product);
+            if (product) {
+                product.quantity = cartItems[key];
+                tempArray.push(product);
+            }
         }
         setCartArray(tempArray);
-    }
+    }, [cartItems, products]);
 
     const placeOrder = async () => {
-        // Your existing placeOrder implementation
+        if (!selectedAddress) {
+            toast.error('Please add a delivery address');
+            navigate('/add-address');
+            return;
+        }
+
+        try {
+            const token = await getToken();
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+            const response = await fetch(`${apiUrl}/orders/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    clerkId: userId,
+                    addressId: selectedAddress._id,
+                    paymentMethod: paymentOptions
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Order placed successfully!');
+
+                // Clear the cart
+                setCartItems({});
+
+                // Clear cart in backend
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+                    await fetch(`${apiUrl}/cart/clear`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ clerkId: userId })
+                    });
+                } catch (clearError) {
+                    console.error('Error clearing cart in backend:', clearError);
+                }
+
+                // Navigate to order details page
+                navigate(`/order/${data.order._id}`);
+            } else {
+                toast.error(data.message || 'Failed to place order');
+            }
+        } catch (error) {
+            console.error('Error placing order:', error);
+            toast.error('Error placing order. Please try again.');
+        }
     }
 
     const handleDeleteClick = (productId) => {
@@ -42,8 +102,43 @@ const Cart = () => {
     useEffect(() => {
         if (products.length > 0 && cartItems) {
             getCart();
+            setIsLoading(false);
         }
-    }, [products, cartItems])
+    }, [products, cartItems, getCart])
+
+    // Fetch default address when component mounts
+    useEffect(() => {
+        const fetchDefaultAddress = async () => {
+            if (!userId) return;
+
+            try {
+                const token = await getToken();
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+                const response = await fetch(`${apiUrl}/address/default`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ clerkId: userId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    setSelectedAddress(data.address);
+                } else {
+                    // If no default address, prompt user to add one
+                    console.log('No default address found');
+                }
+            } catch (error) {
+                console.error('Error fetching default address:', error);
+            }
+        };
+
+        fetchDefaultAddress();
+    }, [userId, getToken])
 
     // Effect to handle body overflow when dialog is open
     useEffect(() => {
@@ -58,6 +153,10 @@ const Cart = () => {
             document.body.style.overflow = 'auto';
         };
     }, [showDeleteDialog]);
+
+    if (isLoading) {
+        return <Loader text="Loading your cart..." />;
+    }
 
     return products.length > 0 && cartItems ? (
         <div className="flex flex-col md:flex-row mt-16">
@@ -153,26 +252,26 @@ const Cart = () => {
                 <div className="mb-6">
                     <p className="text-sm font-medium uppercase">Delivery Address</p>
                     <div className="relative flex justify-between items-start mt-2">
-                        <p className="text-gray-500">{selectedAddress ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.country}` : "No address found!"}</p>
-                        <button onClick={() => setShowAddress(!showAddress)} className="text-primary hover:underline cursor-pointer">
-                            Change
-                        </button>
-                        {showAddress && (
-                            <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
-                                {addresses.map((address, index) => (
-                                    <p
-                                        key={index}
-                                        onClick={() => { setSelectedAddress(address); setShowAddress(false) }}
-                                        className="text-gray-500 p-2 hover:bg-gray-100"
-                                    >
-                                        {address.street}, {address.city}, {address.state}, {address.country}
-                                    </p>
-                                ))}
-                                <p onClick={() => navigate('/add-address')} className="text-primary text-center cursor-pointer p-2 hover:bg-primary/10">
-                                    Add address
-                                </p>
+                        {selectedAddress ? (
+                            <div className="text-gray-500">
+                                <p className="font-medium">{selectedAddress.firstName} {selectedAddress.lastName}</p>
+                                <p>{selectedAddress.addressLine1}</p>
+                                {selectedAddress.addressLine2 && <p>{selectedAddress.addressLine2}</p>}
+                                <p>{selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}</p>
+                                <p className="text-xs mt-1 text-primary font-medium">Default Address</p>
                             </div>
+                        ) : (
+                            <p className="text-gray-500">No default address found</p>
                         )}
+                        <button
+                            onClick={() => {
+                                localStorage.setItem('productDetailsLoading', 'true');
+                                navigate('/add-address');
+                            }}
+                            className="text-primary hover:underline cursor-pointer"
+                        >
+                            {selectedAddress ? 'Change' : 'Add Address'}
+                        </button>
                     </div>
 
                     <p className="text-sm font-medium uppercase mt-6">Payment Method</p>
@@ -182,8 +281,8 @@ const Cart = () => {
                         className="w-full border border-gray-300 bg-white px-3 py-2 mt-2 outline-none"
                         value={paymentOptions}
                     >
-                        <option value="COD">Cash On Delivery</option>
-                        <option value="Online">Online Payment</option>
+                        <option value="Cash on Delivery">Cash On Delivery</option>
+                        <option value="Online Payment">Online Payment</option>
                     </select>
                 </div>
 
@@ -205,7 +304,7 @@ const Cart = () => {
                 </div>
 
                 <button onClick={placeOrder} className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition">
-                    {paymentOptions === "COD" ? "Place Order" : "Proceed to Checkout"}
+                    {paymentOptions === "Cash on Delivery" ? "Place Order" : "Proceed to Checkout"}
                 </button>
             </div>
         </div>

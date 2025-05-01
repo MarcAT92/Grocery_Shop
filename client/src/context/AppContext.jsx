@@ -4,22 +4,58 @@ import { useNavigate } from "react-router-dom";
 import { dummyProducts } from "../assets/assets";
 import toast from "react-hot-toast";
 import { isAdminLoggedIn, adminLogout } from "../utils/adminAuth";
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {
-  const currency = import.meta.env.VITE_CURRENCY;
+  const currency = import.meta.env.VITE_CURRENCY || "$";
 
   const navigate = useNavigate();
+  const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(isAdminLoggedIn());
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Fetch AlL Products
+  // Fetch All Products
   const fetchProducts = async () => {
-    setProducts(dummyProducts);
+    try {
+      console.log('Fetching products from API...');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+      // Add a timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${apiUrl}/product/list?t=${timestamp}`);
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // If we get an empty array from the API, that's valid - don't use dummy data
+        const productCount = data.products ? data.products.length : 0;
+        console.log(`Fetched ${productCount} products from API`);
+        setProducts(data.products || []);
+        return data.products || [];
+      } else {
+        console.error('Failed to fetch products:', data.message);
+        // Fallback to dummy products if API fails with an error
+        toast.error('Failed to load products. Using sample data instead.');
+        setProducts(dummyProducts);
+        return dummyProducts;
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Fallback to dummy products if API fails
+      toast.error('Error loading products. Using sample data instead.');
+      setProducts(dummyProducts);
+      return dummyProducts;
+    }
   };
 
   // Admin logout function
@@ -37,8 +73,61 @@ export const AppContextProvider = ({ children }) => {
   // Get unique categories
   const categories = ['all', ...new Set(products.map(product => product.category))];
 
+  // Function to sync a single cart item with backend
+  const syncCartItemWithBackend = async (productId, quantity) => {
+    try {
+      if (!isSignedIn || !user) return;
+
+      const token = await getToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+      await fetch(`${apiUrl}/cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          clerkId: user.id,
+          productId,
+          quantity
+        })
+      });
+
+      console.log(`Synced cart item: ${productId}, quantity: ${quantity}`);
+    } catch (error) {
+      console.error('Error syncing cart item with backend:', error);
+    }
+  };
+
+  // Function to remove a cart item from backend
+  const removeCartItemFromBackend = async (productId) => {
+    try {
+      if (!isSignedIn || !user) return;
+
+      const token = await getToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+      await fetch(`${apiUrl}/cart/remove`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          clerkId: user.id,
+          productId
+        })
+      });
+
+      console.log(`Removed cart item: ${productId}`);
+    } catch (error) {
+      console.error('Error removing cart item from backend:', error);
+    }
+  };
+
   // Add Product To Cart
-  const addToCart = (itemId) => {
+  const addToCart = async (itemId) => {
     let cartData = structuredClone(cartItems);
 
     if (cartData[itemId]) {
@@ -48,18 +137,36 @@ export const AppContextProvider = ({ children }) => {
     }
     setCartItems(cartData);
     toast.success("Added to cart");
+
+    // Sync with backend if user is signed in
+    if (isSignedIn && user) {
+      try {
+        await syncCartItemWithBackend(itemId, cartData[itemId]);
+      } catch (error) {
+        console.error('Error syncing cart with backend:', error);
+      }
+    }
   };
 
   // Update Cart Item Quantity
-  const updateCartItem = (itemId, quantity) => {
+  const updateCartItem = async (itemId, quantity) => {
     let cartData = structuredClone(cartItems);
     cartData[itemId] = quantity;
     setCartItems(cartData);
     toast.success("Quantity updated");
+
+    // Sync with backend if user is signed in
+    if (isSignedIn && user) {
+      try {
+        await syncCartItemWithBackend(itemId, quantity);
+      } catch (error) {
+        console.error('Error syncing cart with backend:', error);
+      }
+    }
   };
 
   // Remove Product From Cart (decrements quantity)
-  const removeFromCart = (itemId) => {
+  const removeFromCart = async (itemId) => {
     let cartData = structuredClone(cartItems);
     if (cartData[itemId]) {
       cartData[itemId] -= 1;
@@ -69,15 +176,37 @@ export const AppContextProvider = ({ children }) => {
     }
     toast.success("Removed from cart");
     setCartItems(cartData);
+
+    // Sync with backend if user is signed in
+    if (isSignedIn && user) {
+      try {
+        if (cartData[itemId]) {
+          await syncCartItemWithBackend(itemId, cartData[itemId]);
+        } else {
+          await removeCartItemFromBackend(itemId);
+        }
+      } catch (error) {
+        console.error('Error syncing cart with backend:', error);
+      }
+    }
   };
 
   // Delete Product From Cart (removes item completely regardless of quantity)
-  const deleteFromCart = (itemId) => {
+  const deleteFromCart = async (itemId) => {
     let cartData = structuredClone(cartItems);
     if (cartData[itemId]) {
       delete cartData[itemId];
       toast.success("Product removed from cart");
       setCartItems(cartData);
+
+      // Sync with backend if user is signed in
+      if (isSignedIn && user) {
+        try {
+          await removeCartItemFromBackend(itemId);
+        } catch (error) {
+          console.error('Error syncing cart with backend:', error);
+        }
+      }
     }
   };
 
@@ -108,6 +237,41 @@ export const AppContextProvider = ({ children }) => {
     fetchProducts();
   }, []);
 
+  // Function to sync cart with backend
+  const syncCartWithBackend = async (cartData, userId) => {
+    try {
+      if (!userId) return;
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+      const token = localStorage.getItem('clerkToken');
+
+      // Convert cart format for backend
+      const cartItems = [];
+      for (const productId in cartData) {
+        cartItems.push({
+          productId,
+          quantity: cartData[productId]
+        });
+      }
+
+      // Send cart data to backend
+      await fetch(`${apiUrl}/cart/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          clerkId: userId,
+          cartItems
+        })
+      });
+
+    } catch (error) {
+      console.error('Error syncing cart with backend:', error);
+    }
+  };
+
   const value = {
     navigate,
     isAdmin,
@@ -119,6 +283,7 @@ export const AppContextProvider = ({ children }) => {
     updateCartItem,
     removeFromCart,
     cartItems,
+    setCartItems,
     getTotalCartAmount,
     getCartItemCount,
     searchQuery,
@@ -127,6 +292,8 @@ export const AppContextProvider = ({ children }) => {
     setSelectedCategory,
     categories,
     handleAdminLogout,
+    syncCartWithBackend,
+    fetchProducts, // Make sure fetchProducts is included in the context value
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

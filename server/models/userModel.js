@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    cart: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cart'
+    },
     createdAt: {
         type: Date,
         default: Date.now

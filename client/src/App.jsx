@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { Toaster } from "react-hot-toast";
@@ -18,6 +18,7 @@ import ClerkIntegration from "./components/ClerkIntegration";
 const Home = React.lazy(() => import("./pages/Home"));
 const AllProduct = React.lazy(() => import("./pages/AllProduct"));
 const ProductDetails = React.lazy(() => import("./pages/ProductDetails"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 
 // Assume these admin components exist
 const AddProducts = React.lazy(() => import("./pages/admin/AddProducts"));
@@ -26,13 +27,12 @@ const Orders = React.lazy(() => import("./pages/admin/Orders"));
 
 const App = () => {
   const location = useLocation();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth(); // Only using isLoaded
   const { isAdmin } = useAppContext();
   const isAdminPath = location.pathname.startsWith("/admin");
 
-  useEffect(() => {
-    // No loader logic needed
-  }, [location.pathname, isLoaded, isSignedIn]);
+
+  // No transition effect needed
 
   if (!isLoaded) {
     return (
@@ -62,6 +62,8 @@ const App = () => {
       {/* Clerk Integration Component */}
       <ClerkIntegration />
 
+      {/* No transition overlay */}
+
       {/* Use Routes component to handle all routing logic */}
       <Routes>
         {/* Public Routes Wrapper */}
@@ -69,7 +71,7 @@ const App = () => {
           !isAdminPath ? (
             <>
               <main className="py-12 px-6 md:px-16 lg:px-24 xl:px-32 relative flex-grow min-h-[calc(100vh-200px)]">
-                <Suspense fallback={null}>
+                <Suspense fallback={<div className="min-h-[60vh]"></div>}>
                   {/* Nested Routes for public pages */}
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -79,6 +81,7 @@ const App = () => {
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/add-address" element={<AddAddress />} />
                     <Route path="/my-orders" element={<MyOrders />} />
+                    <Route path="/order/:id" element={<OrderDetails />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
