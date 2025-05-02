@@ -15,7 +15,11 @@ export const AppContextProvider = ({ children }) => {
   const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(isAdminLoggedIn());
   const [products, setProducts] = useState([]);
-  const [cartItems, setCartItems] = useState({});
+  // Initialize cart items from localStorage if available
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem('guestCart');
+    return savedCart ? JSON.parse(savedCart) : {};
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -133,6 +137,12 @@ export const AppContextProvider = ({ children }) => {
       cartData[itemId] = 1;
     }
     setCartItems(cartData);
+
+    // Save to localStorage if user is not signed in
+    if (!isSignedIn) {
+      localStorage.setItem('guestCart', JSON.stringify(cartData));
+    }
+
     toast.success("Added to cart");
 
     // Sync with backend if user is signed in
@@ -143,6 +153,8 @@ export const AppContextProvider = ({ children }) => {
         console.error('Error syncing cart with backend:', error);
       }
     }
+
+    return true; // Return true to indicate the operation succeeded
   };
 
   // Update Cart Item Quantity
@@ -150,6 +162,12 @@ export const AppContextProvider = ({ children }) => {
     let cartData = structuredClone(cartItems);
     cartData[itemId] = quantity;
     setCartItems(cartData);
+
+    // Save to localStorage if user is not signed in
+    if (!isSignedIn) {
+      localStorage.setItem('guestCart', JSON.stringify(cartData));
+    }
+
     toast.success("Quantity updated");
 
     // Sync with backend if user is signed in
@@ -160,6 +178,8 @@ export const AppContextProvider = ({ children }) => {
         console.error('Error syncing cart with backend:', error);
       }
     }
+
+    return true; // Return true to indicate the operation succeeded
   };
 
   // Remove Product From Cart (decrements quantity)
@@ -171,8 +191,14 @@ export const AppContextProvider = ({ children }) => {
         delete cartData[itemId];
       }
     }
-    toast.success("Removed from cart");
     setCartItems(cartData);
+
+    // Save to localStorage if user is not signed in
+    if (!isSignedIn) {
+      localStorage.setItem('guestCart', JSON.stringify(cartData));
+    }
+
+    toast.success("Removed from cart");
 
     // Sync with backend if user is signed in
     if (isSignedIn && user) {
@@ -186,6 +212,8 @@ export const AppContextProvider = ({ children }) => {
         console.error('Error syncing cart with backend:', error);
       }
     }
+
+    return true; // Return true to indicate the operation succeeded
   };
 
   // Delete Product From Cart (removes item completely regardless of quantity)
@@ -193,8 +221,14 @@ export const AppContextProvider = ({ children }) => {
     let cartData = structuredClone(cartItems);
     if (cartData[itemId]) {
       delete cartData[itemId];
-      toast.success("Product removed from cart");
       setCartItems(cartData);
+
+      // Save to localStorage if user is not signed in
+      if (!isSignedIn) {
+        localStorage.setItem('guestCart', JSON.stringify(cartData));
+      }
+
+      toast.success("Product removed from cart");
 
       // Sync with backend if user is signed in
       if (isSignedIn && user) {
@@ -205,6 +239,8 @@ export const AppContextProvider = ({ children }) => {
         }
       }
     }
+
+    return true; // Return true to indicate the operation succeeded
   };
 
   // Get Total Cart Amount
@@ -230,9 +266,17 @@ export const AppContextProvider = ({ children }) => {
     return totalCount;
   };
 
+  // Fetch products on initial load
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Save cart to localStorage when it changes (for non-signed-in users)
+  useEffect(() => {
+    if (!isSignedIn && Object.keys(cartItems).length > 0) {
+      localStorage.setItem('guestCart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isSignedIn]);
 
   // Function to sync cart with backend
   const syncCartWithBackend = async (cartData, userId) => {

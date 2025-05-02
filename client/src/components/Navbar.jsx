@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react'
+import React, { memo, useCallback, useState, useRef, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
@@ -73,11 +73,12 @@ DesktopMenu.propTypes = {
 
 DesktopMenu.displayName = 'DesktopMenu'
 
-const MobileMenu = memo(({ open, setOpen }) => {
+const MobileMenu = memo(({ open, setOpen, menuRef }) => {
     const handleClose = useCallback(() => setOpen(false), [setOpen])
 
     return open ? (
         <div
+            ref={menuRef}
             className="absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex flex-col items-start gap-4 px-5 text-sm md:hidden z-50"
             role="dialog"
             aria-modal="true"
@@ -131,7 +132,8 @@ const MobileMenu = memo(({ open, setOpen }) => {
 
 MobileMenu.propTypes = {
     open: PropTypes.bool.isRequired,
-    setOpen: PropTypes.func.isRequired
+    setOpen: PropTypes.func.isRequired,
+    menuRef: PropTypes.object.isRequired
     // Removed navigate and cartCount as they are not directly used or passed down further
 }
 
@@ -141,10 +143,42 @@ const Navbar = () => {
     const [open, setOpen] = useState(false)
     const { navigate, getCartItemCount } = useAppContext()
     const cartCount = getCartItemCount()
+    const menuRef = useRef(null)
+    const menuButtonRef = useRef(null)
 
     const toggleMenu = useCallback(() => {
         setOpen(prev => !prev)
     }, [])
+
+    // Handle clicks outside the menu
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Only run this if the menu is open
+            if (!open) return;
+
+            // Close the menu if the click is outside both the menu and the menu button
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target) &&
+                menuButtonRef.current &&
+                !menuButtonRef.current.contains(event.target)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        // Add event listener when the menu is open
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+
+        // Clean up the event listener
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [open])
 
     return (
         <ErrorBoundary>
@@ -159,6 +193,7 @@ const Navbar = () => {
                 <div className="sm:hidden flex items-center gap-5"> {/* Reduced gap */}
                     <CartButton navigate={navigate} cartCount={cartCount} />
                     <button
+                        ref={menuButtonRef}
                         onClick={toggleMenu}
                         aria-label={open ? "Close menu" : "Open menu"}
                         className="p-1" /* Added padding for easier clicking */
@@ -167,7 +202,7 @@ const Navbar = () => {
                     </button>
                 </div>
 
-                <MobileMenu open={open} setOpen={setOpen} />
+                <MobileMenu open={open} setOpen={setOpen} menuRef={menuRef} />
             </nav>
         </ErrorBoundary>
     )

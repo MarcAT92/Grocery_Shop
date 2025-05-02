@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 
 
 const AdminLayout = () => {
+    const { handleAdminLogout, navigate } = useAppContext();
 
-    const { handleAdminLogout } = useAppContext();
+    // Check for valid admin token on mount
+    useEffect(() => {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+            navigate('/admin/login');
+        }
+    }, [navigate]);
 
     const sidebarLinks = [
         { name: "Add Product", path: "/admin", icon: assets.add_icon },

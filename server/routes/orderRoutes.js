@@ -1,5 +1,5 @@
 import express from 'express';
-import { createOrder, getMyOrders, getOrderById, cancelOrder, getAllOrders } from '../controllers/orderController.js';
+import { createOrder, getMyOrders, getOrderById, cancelOrder, getAllOrders, getOrderByIdAdmin, updateOrderStatus } from '../controllers/orderController.js';
 import { verifyAuth } from '../middleware/authMiddleware.js';
 import { protectAdmin } from '../middleware/adminMiddleware.js';
 
@@ -13,5 +13,7 @@ orderRouter.post('/cancel', verifyAuth, cancelOrder);
 
 // Admin routes - protected with protectAdmin middleware
 orderRouter.get('/admin/all', protectAdmin, getAllOrders);
+orderRouter.get('/admin/details/:id', protectAdmin, getOrderByIdAdmin);
+orderRouter.put('/admin/update-status', protectAdmin, updateOrderStatus);
 
 export default orderRouter;

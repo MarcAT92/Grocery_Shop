@@ -295,7 +295,7 @@ export const getAllOrders = async (req, res) => {
 
 export const createOrder = async (req, res) => {
     try {
-        const { clerkId, addressId, paymentMethod } = req.body;
+        const { clerkId, addressId, paymentMethod, deliveryMethod = 'Delivery' } = req.body;
 
         if (!clerkId) {
             return res.status(400).json({
@@ -428,6 +428,7 @@ export const createOrder = async (req, res) => {
                 country: address.country
             },
             paymentMethod,
+            deliveryMethod,
             itemsPrice: orderTotal,
             taxPrice: taxAmount,
             totalPrice: finalTotal,
@@ -449,6 +450,130 @@ export const createOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error creating order',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get order by ID (admin only)
+// @route   GET /api/orders/admin/details/:id
+// @access  Admin
+export const getOrderByIdAdmin = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Order ID is required'
+            });
+        }
+
+        // Find the order
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Try to get user details
+        let userDetails = null;
+        try {
+            const user = await User.findOne({ clerkId: order.userId });
+            if (user) {
+                userDetails = {
+                    name: user.name,
+                    email: user.email
+                };
+            }
+        } catch (error) {
+            console.error(`Error getting user details for ${order.userId}:`, error);
+        }
+
+        // Convert order to object to add the user property
+        const orderObj = order.toObject();
+        orderObj.user = userDetails;
+
+        res.json({
+            success: true,
+            order: orderObj
+        });
+    } catch (error) {
+        console.error('Get order by ID (admin) error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Server error getting order',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Update order status (admin only)
+// @route   PUT /api/orders/admin/update-status
+// @access  Admin
+export const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId, status, isPaid } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Order ID is required'
+            });
+        }
+
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status is required'
+            });
+        }
+
+        // Find the order
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Update order status
+        order.status = status;
+
+        // Update delivery status if status is 'Delivered'
+        if (status === 'Delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = Date.now();
+        }
+
+        // Update payment status only for Cash on Delivery orders
+        if (order.paymentMethod === 'Cash on Delivery' && isPaid !== undefined) {
+            order.isPaid = isPaid;
+            if (isPaid) {
+                order.paidAt = Date.now();
+            } else {
+                order.paidAt = null;
+            }
+        }
+
+        // Save the updated order
+        await order.save();
+
+        res.json({
+            success: true,
+            message: 'Order status updated successfully',
+            order
+        });
+    } catch (error) {
+        console.error('Update order status error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Server error updating order status',
             error: error.message
         });
     }

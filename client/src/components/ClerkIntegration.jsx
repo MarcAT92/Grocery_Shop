@@ -48,7 +48,7 @@ const ClerkIntegration = () => {
     }
   };
 
-  // Function to get cart data from backend
+  // Function to get cart data from backend and merge with guest cart
   const getCartFromBackend = async () => {
     try {
       if (!isSignedIn || !user) return;
@@ -56,6 +56,10 @@ const ClerkIntegration = () => {
       // Get token from Clerk
       const token = await getToken();
       localStorage.setItem('clerkToken', token); // Store token for later use
+
+      // Check if there's a guest cart to merge
+      const guestCartString = localStorage.getItem('guestCart');
+      const guestCart = guestCartString ? JSON.parse(guestCartString) : null;
 
       // Get cart data from backend
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
@@ -69,29 +73,90 @@ const ClerkIntegration = () => {
       });
 
       const data = await response.json();
+      let userCart = {};
 
       if (data.success) {
+        userCart = data.cart || {};
+        console.log('Retrieved user cart from backend:', userCart);
+      }
+
+      // If there's a guest cart, merge it with the user's cart
+      if (guestCart && Object.keys(guestCart).length > 0) {
+        console.log('Found guest cart to merge:', guestCart);
+
+        // Merge the carts - keep the higher quantity for each item
+        const mergedCart = { ...userCart };
+
+        for (const productId in guestCart) {
+          if (!mergedCart[productId] || mergedCart[productId] < guestCart[productId]) {
+            mergedCart[productId] = guestCart[productId];
+          }
+        }
+
         // Update cart items in context
-        setCartItems(data.cart);
-        console.log('Cart synced with backend:', data.cart);
+        setCartItems(mergedCart);
+
+        // Sync the merged cart with the backend
+        // First, clear the existing cart
+        await fetch(`${apiUrl}/cart/clear`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ clerkId: user.id })
+        });
+
+        // Then add each item to the cart
+        for (const productId in mergedCart) {
+          await fetch(`${apiUrl}/cart/add`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              clerkId: user.id,
+              productId,
+              quantity: mergedCart[productId]
+            })
+          });
+        }
+
+        // Clear the guest cart after merging
+        localStorage.removeItem('guestCart');
+        console.log('Merged guest cart with user cart and synced with backend');
+
+        if (Object.keys(guestCart).length > 0) {
+          toast.success('Your cart items have been saved to your account');
+        }
       } else {
-        console.error('Failed to get cart from backend:', data.message);
+        // No guest cart to merge, just use the user's cart from backend
+        setCartItems(userCart);
+        console.log('Using existing user cart from backend');
       }
     } catch (error) {
-      console.error('Error getting cart from backend:', error);
+      console.error('Error getting/merging cart from backend:', error);
       toast.error('Failed to load your cart. Please try again.');
     }
   };
 
-  // Sync user data when user signs in
+  // Sync user data when user signs in or out
   useEffect(() => {
     if (isSignedIn && user) {
+      // User signed in - sync data with backend
       syncUserWithBackend();
       getCartFromBackend();
       console.log('User signed in, syncing data with backend');
-    } else {
-      // Clear clerk token when user signs out
+    } else if (!isSignedIn) {
+      // User signed out - clear clerk token and save current cart as guest cart
       localStorage.removeItem('clerkToken');
+
+      // If there are items in the cart, save them to localStorage
+      if (Object.keys(cartItems).length > 0) {
+        localStorage.setItem('guestCart', JSON.stringify(cartItems));
+        console.log('User signed out, saved cart to localStorage');
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn, user?.id]);

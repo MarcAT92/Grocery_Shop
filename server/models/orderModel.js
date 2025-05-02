@@ -89,6 +89,12 @@ const orderSchema = mongoose.Schema({
         required: true,
         enum: ['Online Payment', 'Cash on Delivery']
     },
+    deliveryMethod: {
+        type: String,
+        required: true,
+        enum: ['Delivery', 'Pickup'],
+        default: 'Delivery'
+    },
     paymentResult: {
         id: { type: String },
         status: { type: String },

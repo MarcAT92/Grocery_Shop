@@ -110,10 +110,18 @@ const MyOrders = () => {
                             </div>
                         </div>
                         <div className='flex flex-col md:items-end mt-3 md:mt-0'>
-                            <p className='text-primary font-medium'>{currency}{order.amount || order.totalPrice}</p>
-                            <span className={`text-sm px-2 py-0.5 rounded-full mt-1 ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : order.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                {order.status || 'Processing'}
-                            </span>
+                            <p className='text-primary font-medium'>{currency}{(order.amount || order.totalPrice).toFixed(2)}</p>
+                            <div className='flex flex-wrap gap-1 mt-1 justify-end'>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : order.status === 'Cancelled' ? 'bg-red-100 text-red-800' : order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                    {order.status || 'Processing'}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${order.isPaid ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                                    {order.isPaid ? 'Paid' : 'Payment Pending'}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800`}>
+                                    {order.deliveryMethod || 'Delivery'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div className='flex justify-between items-center mt-3 pt-3 border-t border-gray-200'>

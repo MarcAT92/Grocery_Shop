@@ -13,6 +13,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import NotFound from "./pages/NotFound";
 import { useAppContext } from "./context/AppContext";
 import ClerkIntegration from "./components/ClerkIntegration";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Lazy load route components
 const Home = React.lazy(() => import("./pages/Home"));
@@ -25,6 +26,7 @@ const AddProducts = React.lazy(() => import("./pages/admin/AddProducts"));
 const ProductList = React.lazy(() => import("./pages/admin/ProductList"));
 const EditProduct = React.lazy(() => import("./pages/admin/EditProduct"));
 const Orders = React.lazy(() => import("./pages/admin/Orders"));
+const AdminOrderDetails = React.lazy(() => import("./pages/admin/AdminOrderDetails"));
 
 const App = () => {
   const location = useLocation();
@@ -80,9 +82,9 @@ const App = () => {
                     <Route path="/products/:category" element={<ProductCategory />} />
                     <Route path="/products/:category/:id" element={<ProductDetails />} />
                     <Route path="/cart" element={<Cart />} />
-                    <Route path="/add-address" element={<AddAddress />} />
-                    <Route path="/my-orders" element={<MyOrders />} />
-                    <Route path="/order/:id" element={<OrderDetails />} />
+                    <Route path="/add-address" element={<ProtectedRoute><AddAddress /></ProtectedRoute>} />
+                    <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+                    <Route path="/order/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
@@ -107,6 +109,7 @@ const App = () => {
           <Route path="product-list" element={<ProductList />} />
           <Route path="edit-product" element={<EditProduct />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="orders/:id" element={<AdminOrderDetails />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
 

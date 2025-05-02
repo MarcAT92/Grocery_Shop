@@ -32,9 +32,29 @@ const AdminLogin = () => {
 
             if (data.success) {
                 // Store token in localStorage for future requests
-                localStorage.setItem('adminToken', data.token);
-                setIsAdmin(true);
-                // Navigation is handled by the useEffect below
+                try {
+                    // Log the token for debugging
+                    console.log('Received token:', data.token);
+
+                    // Store token in localStorage
+                    localStorage.setItem('adminToken', data.token);
+
+                    // Verify the token was stored correctly
+                    const storedToken = localStorage.getItem('adminToken');
+                    console.log('Stored token:', storedToken);
+
+                    if (storedToken && storedToken === data.token) {
+                        console.log('Admin token stored successfully');
+                        setIsAdmin(true);
+                        // Navigation is handled by the useEffect below
+                    } else {
+                        console.error('Token storage verification failed');
+                        setError('Failed to store authentication token. Please try again.');
+                    }
+                } catch (storageError) {
+                    console.error('Error storing token:', storageError);
+                    setError('Failed to store authentication token. Please try again.');
+                }
             } else {
                 setError(data.message || 'Invalid email or password.');
             }

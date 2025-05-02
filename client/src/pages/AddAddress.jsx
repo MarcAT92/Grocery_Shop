@@ -18,14 +18,13 @@ const AddAddress = () => {
     const [editingAddress, setEditingAddress] = useState(null);
     const [showForm, setShowForm] = useState(false);
 
-    // Fetch all addresses when component mounts
+    // Fetch addresses when component mounts
     useEffect(() => {
         // Clear the loading flag from localStorage
         localStorage.removeItem('productDetailsLoading');
 
-        if (userId) {
-            fetchAddresses();
-        }
+        // Since we're using ProtectedRoute, we know the user is signed in
+        fetchAddresses();
     }, [userId]);
 
     const fetchAddresses = async () => {
@@ -143,45 +142,36 @@ const AddAddress = () => {
         setShowForm(true);
     };
 
+
+
     return (
         <div className='container mx-auto px-4 py-8 max-w-5xl mt-10'>
             <div className="flex items-center mb-6">
                 <button
                     onClick={() => {
-                        localStorage.setItem('productDetailsLoading', 'true');
-                        navigate(-1);
+                        if (showForm) {
+                            setShowForm(false);
+                            setEditingAddress(null);
+                        } else {
+                            localStorage.setItem('productDetailsLoading', 'true');
+                            navigate(-1);
+                        }
                     }}
-                    className="group cursor-pointer flex items-center gap-2 text-primary font-medium"
+                    className="group cursor-pointer flex items-center gap-2 text-primary font-medium mr-2"
                 >
                     <img src={assets.arrow_right_icon_colored} alt='arrow' className='group-hover:translate-x-1 transition' />
                 </button>
-                <p className='text-2xl md:text-3xl text-gray-500 ml-2'>Manage <span className='font-semibold text-primary'>Addresses</span></p>
+                <p className='text-2xl md:text-3xl text-gray-500'>
+                    {showForm ? (editingAddress ? 'Edit Address' : 'Add New Address') : 'Manage '}
+                    {!showForm && <span className='font-semibold text-primary'>Addresses</span>}
+                </p>
             </div>
 
             <div className='flex flex-col-reverse md:flex-row justify-between mt-6 gap-8'>
                 <div className='flex-1'>
                     {showForm ? (
                         <div className="bg-white p-6 rounded-lg shadow mb-8">
-                            <div className="flex items-center mb-4">
-                                <button
-                                    onClick={() => {
-                                        setShowForm(false);
-                                        setEditingAddress(null);
-                                    }}
-                                    className="group cursor-pointer flex items-center gap-2 text-primary font-medium"
-                                >
-                                    <div className="transform rotate-180">
-                                        <img
-                                            src={assets.arrow_right_icon_colored}
-                                            alt='arrow'
-                                            className='group-hover:-translate-x-1 transition'
-                                        />
-                                    </div>
-                                </button>
-                                <h2 className="text-xl font-medium ml-2">
-                                    {editingAddress ? 'Edit Address' : 'Add New Address'}
-                                </h2>
-                            </div>
+                            {/* Form header removed as it's now handled in the main page header */}
                             <AddressForm
                                 existingAddress={editingAddress}
                                 onSave={handleAddressSaved}
@@ -199,7 +189,7 @@ const AddAddress = () => {
                                     onClick={() => setShowForm(true)}
                                     className="px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary-dark flex items-center gap-2"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                     </svg>
                                     Add New Address
@@ -282,7 +272,7 @@ const AddAddress = () => {
                         </div>
                     )}
                 </div>
-                <img className='md:w-1/3 h-fit md:mr-16 mb-16 md:mt-0' src={assets.add_address_iamge} alt='add address' />
+                <img className='md:w-1/3 h-fit md:mr-16 mb-16 md:mt-0' src={assets.add_address_image} alt='add address' />
             </div>
         </div>
     )

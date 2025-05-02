@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import Loader from '../../components/Loader';
 import toast from 'react-hot-toast';
 
 const Orders = () => {
     const { currency } = useAppContext();
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     // State for error messages
@@ -34,13 +36,15 @@ const Orders = () => {
                 setError('Authentication token not found. Please log in again.');
                 toast.error('Authentication token not found. Please log in again.');
                 setIsLoading(false);
+                navigate('/admin/login');
                 return;
             }
 
+            console.log('Fetching orders with token:', token);
             const response = await fetch(`${apiUrl}/orders/admin/all`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': token, // Send token directly without Bearer prefix
                     'Content-Type': 'application/json'
                 }
             });
@@ -61,16 +65,28 @@ const Orders = () => {
             } else {
                 setError(data.message || 'Failed to fetch orders');
                 toast.error(data.message || 'Failed to fetch orders');
+
+                // If unauthorized, redirect to login
+                if (response.status === 401 || response.status === 403 || data.message?.includes('unauthorized') || data.message?.includes('token')) {
+                    localStorage.removeItem('adminToken');
+                    navigate('/admin/login');
+                }
             }
         } catch (error) {
             console.error('Error fetching orders:', error);
             setError('An error occurred while fetching orders');
             toast.error('An error occurred while fetching orders');
+
+            // Check if it's an authentication error
+            if (error.message?.includes('token') || error.message?.includes('unauthorized')) {
+                localStorage.removeItem('adminToken');
+                navigate('/admin/login');
+            }
         } finally {
             if (timeoutId) clearTimeout(timeoutId);
             setIsLoading(false);
         }
-    }, []);
+    }, [navigate]);
 
     // Handle refresh button click with useCallback for memoization
     const handleRefresh = useCallback(async () => {
@@ -140,7 +156,8 @@ const Orders = () => {
                     <div
                         key={index}
                         className="p-5 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200
-                        cursor-pointer">
+                        cursor-pointer"
+                        onClick={() => navigate(`/admin/orders/${order._id}`)}>
                         <div className="flex justify-between items-center mb-3 relative">
                             <div className="flex items-center gap-2">
                                 <span className="bg-primary/5 text-primary text-xs px-2 py-0.5 rounded-full font-medium">

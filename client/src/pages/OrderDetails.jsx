@@ -128,8 +128,11 @@ const OrderDetails = () => {
         return () => clearInterval(timer);
     }, [timeLeft]);
 
-    // Fetch order details when component mounts
+    // Fetch order details when component mounts and scroll to top
     useEffect(() => {
+        // Scroll to the top of the page when component mounts
+        window.scrollTo(0, 0);
+
         if (isSignedIn && user) {
             fetchOrderDetails();
         }
@@ -206,12 +209,34 @@ const OrderDetails = () => {
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <h2 className="text-xl font-medium">Order Status</h2>
-                        <p className={`mt-2 ${order.status === 'Delivered' ? 'text-green-600' :
-                            order.status === 'Cancelled' ? 'text-red-600' :
-                                'text-orange-500'
-                            }`}>
-                            {order.status}
-                        </p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : order.status === 'Cancelled' ? 'bg-red-100 text-red-800' : order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {order.status}
+                            </span>
+                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${order.isPaid ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                                {order.isPaid ? 'Paid' : 'Payment Pending'}
+                            </span>
+                        </div>
+
+                        <div className="mt-4">
+                            <p className="text-gray-500 font-medium">Payment Details</p>
+                            <div className="flex flex-col mt-1">
+                                <div className="flex items-center">
+                                    <span className="text-gray-600 mr-2">Payment:</span>
+                                    <span className="font-medium">{order.paymentMethod}</span>
+                                </div>
+                                <div className="flex items-center mt-1">
+                                    <span className="text-gray-600 mr-2">Fulfillment:</span>
+                                    <span className="font-medium">{order.deliveryMethod || 'Delivery'}</span>
+                                </div>
+                                {order.isPaid && order.paidAt && (
+                                    <div className="flex items-center mt-1">
+                                        <span className="text-gray-600 mr-2">Paid on:</span>
+                                        <span className="font-medium">{new Date(order.paidAt).toLocaleDateString()}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                     <div className="text-right">
                         <p className="text-gray-500">Order Date</p>
@@ -245,10 +270,18 @@ const OrderDetails = () => {
                     </div>
                 )}
 
-                {order.status !== 'Cancelled' && !order.canCancel && (
+                {order.status !== 'Cancelled' && order.status !== 'Delivered' && !order.canCancel && (
                     <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
                         <p className="text-gray-700">
                             The cancellation window for this order has expired. If you need to cancel this order, please contact customer support.
+                        </p>
+                    </div>
+                )}
+
+                {order.status === 'Delivered' && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-green-700">
+                            This order has been delivered successfully. Thank you for shopping with us!
                         </p>
                     </div>
                 )}
@@ -263,22 +296,6 @@ const OrderDetails = () => {
                     <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
                     <p>{order.shippingAddress.country}</p>
                     <p className="mt-2">Phone: {order.shippingAddress.phoneNumber}</p>
-                </div>
-            </div>
-
-            <div className="border border-gray-300 rounded-lg p-5 mb-6">
-                <h2 className="text-xl font-medium mb-4">Payment Information</h2>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <p className="text-gray-500">Payment Method</p>
-                        <p className="font-medium">{order.paymentMethod}</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-gray-500">Payment Status</p>
-                        <p className={`font-medium ${order.isPaid ? 'text-green-600' : 'text-orange-500'}`}>
-                            {order.isPaid ? 'Paid' : 'Pending'}
-                        </p>
-                    </div>
                 </div>
             </div>
 
@@ -298,12 +315,12 @@ const OrderDetails = () => {
                             <div className="ml-4">
                                 <h3 className="font-medium">{item.name}</h3>
                                 <p className="text-gray-500">Quantity: {item.quantity}</p>
-                                <p className="text-gray-500">{currency}{item.price} each</p>
+                                <p className="text-gray-500">{currency}{item.price.toFixed(2)} each</p>
                             </div>
                         </div>
                         <div className="text-right md:ml-4">
                             <p className="text-gray-500">Subtotal</p>
-                            <p className="font-medium">{currency}{item.itemTotal}</p>
+                            <p className="font-medium">{currency}{item.itemTotal.toFixed(2)}</p>
                         </div>
                     </div>
                 ))}
@@ -311,11 +328,11 @@ const OrderDetails = () => {
                 <div className="mt-6 pt-4 border-t border-gray-200">
                     <div className="flex justify-between text-gray-500">
                         <span>Subtotal</span>
-                        <span>{currency}{order.itemsPrice}</span>
+                        <span>{currency}{order.itemsPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-500 mt-2">
                         <span>Tax</span>
-                        <span>{currency}{order.taxPrice}</span>
+                        <span>{currency}{order.taxPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-500 mt-2">
                         <span>Shipping</span>
@@ -323,7 +340,7 @@ const OrderDetails = () => {
                     </div>
                     <div className="flex justify-between font-medium text-lg mt-4 pt-4 border-t border-gray-200">
                         <span>Total</span>
-                        <span>{currency}{order.totalPrice}</span>
+                        <span>{currency}{order.totalPrice.toFixed(2)}</span>
                     </div>
                 </div>
             </div>
