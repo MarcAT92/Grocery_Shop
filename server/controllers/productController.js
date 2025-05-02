@@ -182,8 +182,26 @@ export const changeStock = async (req, res) => {
 // @access  Private (Admin only)
 export const updateProduct = async (req, res) => {
     try {
-        const { id } = req.body;
-        let productData = JSON.parse(req.body.productData);
+        // Log the request body for debugging
+        console.log('Update product request body:', req.body);
+
+        // Try to get ID from multiple possible sources
+        let id = req.body.id;
+        let productData;
+
+        try {
+            productData = JSON.parse(req.body.productData);
+            // If ID wasn't in the body directly, try to get it from productData
+            if (!id && productData && productData.id) {
+                id = productData.id;
+            }
+        } catch (error) {
+            console.error('Error parsing productData:', error);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid product data format'
+            });
+        }
 
         if (!id) {
             return res.status(400).json({
@@ -225,12 +243,25 @@ export const updateProduct = async (req, res) => {
             productData.image = existingProduct.image;
         }
 
+        // Remove the id from productData before updating
+        // to prevent MongoDB from trying to update the _id field
+        if (productData.id) {
+            delete productData.id;
+        }
+
         // Update product
         const updatedProduct = await Product.findByIdAndUpdate(
             id,
             productData,
             { new: true, runValidators: true }
         );
+
+        if (!updatedProduct) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found or could not be updated'
+            });
+        }
 
         res.json({
             success: true,

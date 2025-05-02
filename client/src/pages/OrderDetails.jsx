@@ -88,7 +88,7 @@ const OrderDetails = () => {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Order cancelled successfully');
+                toast.success('Order cancelled and removed successfully');
                 setShowCancelDialog(false);
                 // Navigate back to my orders page since the order has been removed
                 navigate('/my-orders');
@@ -197,8 +197,8 @@ const OrderDetails = () => {
                     Back to My Orders
                 </Link>
                 <div>
-                    <span className="text-gray-500">Order ID: </span>
-                    <span className="font-medium">{order._id}</span>
+                    <span className="text-gray-500">Order Number: </span>
+                    <span className="font-medium">{order.orderNumber || `#${order._id.substring(order._id.length - 6)}`}</span>
                 </div>
             </div>
 

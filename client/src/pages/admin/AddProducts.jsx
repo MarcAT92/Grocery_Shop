@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { assets, categories } from '../../assets/assets';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '../../context/AppContext';
 import Loader from '../../components/Loader';
 
 const AddProducts = () => {
+    const navigate = useNavigate();
     const { fetchProducts } = useAppContext();
     const [files, setFiles] = useState([]);
     const [name, setName] = useState('');
@@ -58,8 +60,8 @@ const AddProducts = () => {
                 name,
                 description: parseDescription(description),
                 category,
-                price: parseFloat(price),
-                offerPrice: parseFloat(offerPrice),
+                price: parseFloat(parseFloat(price).toFixed(2)),
+                offerPrice: parseFloat(parseFloat(offerPrice).toFixed(2)),
                 inStock: true
             };
 
@@ -128,7 +130,17 @@ const AddProducts = () => {
     return (
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll fle flex-col justify-between">
             <div className="flex justify-between items-center md:px-10 px-4 pt-4 pb-4">
-                <h2 className="text-lg font-medium">Add New Product</h2>
+                <div className="flex items-center">
+                    <button
+                        onClick={() => navigate('/admin/product-list')}
+                        className="mr-3 p-2 text-primary hover:bg-primary/5 rounded-full flex items-center justify-center transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <h2 className="text-lg font-medium">Add New Product</h2>
+                </div>
             </div>
 
             {isLoading ? (
@@ -138,16 +150,35 @@ const AddProducts = () => {
             ) : (
                 <form onSubmit={onSubmitHandler} className="md:px-10 md:pb-10 p-4 space-y-5 max-w-lg">
                     <div>
-                        <p className="text-base font-medium">Product Image</p>
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <p className="text-base font-medium">Product Images</p>
+                        <p className="text-sm text-gray-500 mt-3 mb-2">Add Images:</p>
+                        <div className="flex flex-wrap items-center gap-3">
                             {Array(4).fill('').map((_, index) => (
                                 <label key={index} htmlFor={`image${index}`}>
-                                    <input onChange={(e) => {
-                                        const updatedFiles = [...files];
-                                        updatedFiles[index] = e.target.files[0];
-                                        setFiles(updatedFiles);
-                                    }} accept="image/*" type="file" id={`image${index}`} hidden />
-                                    <img className="max-w-24 cursor-pointer" src={files[index] ? URL.createObjectURL(files[index]) : assets.upload_area} alt="uploadArea" width={100} height={100} />
+                                    <input
+                                        onChange={(e) => {
+                                            const updatedFiles = [...files];
+                                            updatedFiles[index] = e.target.files[0];
+                                            setFiles(updatedFiles);
+                                        }}
+                                        accept="image/*"
+                                        type="file"
+                                        id={`image${index}`}
+                                        hidden
+                                    />
+                                    <div className="w-24 h-24 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50">
+                                        {files[index] ? (
+                                            <img
+                                                src={URL.createObjectURL(files[index])}
+                                                alt={`Upload ${index}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        )}
+                                    </div>
                                 </label>
                             ))}
                         </div>
@@ -179,12 +210,32 @@ const AddProducts = () => {
                             <input onChange={(e) => setOfferPrice(e.target.value)} value={offerPrice} id="offer-price" type="number" placeholder="0" className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" required />
                         </div>
                     </div>
-                    <button
-                        type="submit"
-                        className="px-8 py-2.5 bg-primary text-white font-medium rounded cursor-pointer"
-                    >
-                        ADD PRODUCT
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="inStock"
+                            checked={true} /* Always true for new products */
+                            disabled={true} /* Disabled since it's always true for new products */
+                            className="w-4 h-4"
+                        />
+                        <label htmlFor="inStock" className="text-base font-medium">In Stock</label>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/admin/product-list')}
+                            className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded cursor-pointer hover:bg-gray-50"
+                        >
+                            CANCEL
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-8 py-2.5 bg-primary text-white font-medium rounded cursor-pointer hover:bg-primary-dark"
+                        >
+                            ADD PRODUCT
+                        </button>
+                    </div>
                 </form>
             )}
         </div>

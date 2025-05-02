@@ -72,6 +72,11 @@ const shippingAddressSchema = mongoose.Schema({
 });
 
 const orderSchema = mongoose.Schema({
+    orderNumber: {
+        type: String,
+        required: true,
+        unique: true
+    },
     userId: {
         type: String,
         required: true,

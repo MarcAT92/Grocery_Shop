@@ -2,6 +2,8 @@ import Order from '../models/orderModel.js';
 import Cart from '../models/cartModel.js';
 import Address from '../models/addressModel.js';
 import Product from '../models/productModel.js';
+import User from '../models/userModel.js';
+import { generateOrderNumber } from '../utils/orderUtils.js';
 
 // @desc    Create a new order
 // @route   POST /api/orders/create
@@ -198,7 +200,7 @@ export const cancelOrder = async (req, res) => {
             });
         }
 
-        // Delete the order from the database
+        // Delete the order from the database completely
         await Order.findByIdAndDelete(orderId);
 
         res.json({
@@ -210,6 +212,82 @@ export const cancelOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error cancelling order',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get all orders (admin only)
+// @route   GET /api/orders/admin/all
+// @access  Admin
+export const getAllOrders = async (req, res) => {
+    try {
+        // Find all orders, sort by most recent first
+        const orders = await Order.find().sort({ createdAt: -1 });
+
+        // Populate product details for each order item
+        const populatedOrders = await Promise.all(orders.map(async (order) => {
+            const orderObj = order.toObject();
+
+            // For each order item, get the full product details
+            const populatedItems = await Promise.all(orderObj.orderItems.map(async (item) => {
+                try {
+                    const product = await Product.findById(item.product);
+                    return {
+                        ...item,
+                        product: product ? {
+                            _id: product._id,
+                            name: product.name,
+                            category: product.category,
+                            image: product.image,
+                            price: product.price,
+                            offerPrice: product.offerPrice,
+                            inStock: product.inStock
+                        } : {
+                            _id: item.product,
+                            name: item.name,
+                            image: [item.image],
+                            offerPrice: item.price
+                        }
+                    };
+                } catch (error) {
+                    console.error(`Error populating product ${item.product}:`, error);
+                    return item;
+                }
+            }));
+
+            // Try to get user details
+            let userDetails = null;
+            try {
+                const user = await User.findOne({ clerkId: orderObj.userId });
+                if (user) {
+                    userDetails = {
+                        name: user.name,
+                        email: user.email
+                    };
+                }
+            } catch (error) {
+                console.error(`Error getting user details for ${orderObj.userId}:`, error);
+            }
+
+            return {
+                ...orderObj,
+                orderItems: populatedItems,
+                amount: orderObj.totalPrice, // Add amount field for frontend compatibility
+                user: userDetails
+            };
+        }));
+
+        res.json({
+            success: true,
+            count: populatedOrders.length,
+            orders: populatedOrders
+        });
+    } catch (error) {
+        console.error('Get all orders error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Server error getting orders',
             error: error.message
         });
     }
@@ -307,8 +385,34 @@ export const createOrder = async (req, res) => {
         const taxAmount = orderTotal * taxRate;
         const finalTotal = orderTotal + taxAmount;
 
-        // Create the order
+        // Generate a unique order number
+        let orderNumber;
+        let isUnique = false;
+        let maxAttempts = 10;
+        let attempts = 0;
+
+        // Keep generating order numbers until we find a unique one
+        // or reach the maximum number of attempts
+        while (!isUnique && attempts < maxAttempts) {
+            orderNumber = generateOrderNumber();
+            // Check if this order number already exists
+            const existingOrder = await Order.findOne({ orderNumber });
+            if (!existingOrder) {
+                isUnique = true;
+            }
+            attempts++;
+        }
+
+        if (!isUnique) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to generate a unique order number. Please try again.'
+            });
+        }
+
+        // Create the order with the unique order number
         const order = await Order.create({
+            orderNumber,
             userId: clerkId,
             orderItems,
             shippingAddress: {

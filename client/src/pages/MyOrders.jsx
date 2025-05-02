@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { dummyOrders } from '../assets/assets';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -18,8 +17,8 @@ const MyOrders = () => {
         setIsLoading(true);
         try {
             if (!isSignedIn || !user) {
-                // If user is not signed in, use dummy data
-                setMyOrders(dummyOrders);
+                // If user is not signed in, show empty state
+                setMyOrders([]);
                 return;
             }
 
@@ -43,14 +42,12 @@ const MyOrders = () => {
             } else {
                 console.error('Failed to fetch orders:', data.message);
                 toast.error('Failed to load your orders');
-                // Fallback to dummy data
-                setMyOrders(dummyOrders);
+                setMyOrders([]);
             }
         } catch (error) {
             console.error('Error fetching orders:', error);
             toast.error('Error loading your orders');
-            // Fallback to dummy data
-            setMyOrders(dummyOrders);
+            setMyOrders([]);
         } finally {
             setIsLoading(false);
         }
@@ -108,7 +105,7 @@ const MyOrders = () => {
                                 />
                             </div>
                             <div>
-                                <p className='text-gray-800 font-medium'>Order #{order._id.substring(order._id.length - 6)}</p>
+                                <p className='text-gray-800 font-medium'>Order {order.orderNumber || `#${order._id.substring(order._id.length - 6)}`}</p>
                                 <p className='text-gray-500 text-sm'>{new Date(order.createdAt).toLocaleDateString()}</p>
                             </div>
                         </div>

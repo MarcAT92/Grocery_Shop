@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { dummyProducts } from "../assets/assets";
 import toast from "react-hot-toast";
 import { isAdminLoggedIn, adminLogout } from "../utils/adminAuth";
 import { useAuth, useUser } from '@clerk/clerk-react';
@@ -37,24 +36,22 @@ export const AppContextProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        // If we get an empty array from the API, that's valid - don't use dummy data
+        // If we get an empty array from the API, that's valid
         const productCount = data.products ? data.products.length : 0;
         console.log(`Fetched ${productCount} products from API`);
         setProducts(data.products || []);
         return data.products || [];
       } else {
         console.error('Failed to fetch products:', data.message);
-        // Fallback to dummy products if API fails with an error
-        toast.error('Failed to load products. Using sample data instead.');
-        setProducts(dummyProducts);
-        return dummyProducts;
+        toast.error('Failed to load products.');
+        setProducts([]);
+        return [];
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-      // Fallback to dummy products if API fails
-      toast.error('Error loading products. Using sample data instead.');
-      setProducts(dummyProducts);
-      return dummyProducts;
+      toast.error('Error loading products. Please try again later.');
+      setProducts([]);
+      return [];
     }
   };
 
@@ -293,7 +290,7 @@ export const AppContextProvider = ({ children }) => {
     categories,
     handleAdminLogout,
     syncCartWithBackend,
-    fetchProducts, // Make sure fetchProducts is included in the context value
+    fetchProducts
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

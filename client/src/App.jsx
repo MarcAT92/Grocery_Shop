@@ -23,6 +23,7 @@ const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 // Assume these admin components exist
 const AddProducts = React.lazy(() => import("./pages/admin/AddProducts"));
 const ProductList = React.lazy(() => import("./pages/admin/ProductList"));
+const EditProduct = React.lazy(() => import("./pages/admin/EditProduct"));
 const Orders = React.lazy(() => import("./pages/admin/Orders"));
 
 const App = () => {
@@ -104,6 +105,7 @@ const App = () => {
         }>
           <Route index element={<AddProducts />} />
           <Route path="product-list" element={<ProductList />} />
+          <Route path="edit-product" element={<EditProduct />} />
           <Route path="orders" element={<Orders />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
