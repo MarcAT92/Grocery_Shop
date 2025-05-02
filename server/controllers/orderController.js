@@ -4,6 +4,7 @@ import Address from '../models/addressModel.js';
 import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import { generateOrderNumber } from '../utils/orderUtils.js';
+import { logger } from '../utils/logger.js';
 
 // @desc    Create a new order
 // @route   POST /api/orders/create
@@ -65,7 +66,7 @@ export const getOrderById = async (req, res) => {
             order: orderObj
         });
     } catch (error) {
-        console.error('Get order by ID error:', error.message);
+        logger.error('OrderController', 'Get order by ID error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting order',
@@ -132,7 +133,7 @@ export const getMyOrders = async (req, res) => {
             orders: populatedOrders
         });
     } catch (error) {
-        console.error('Get my orders error:', error.message);
+        logger.error('OrderController', 'Get my orders error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting orders',
@@ -208,7 +209,7 @@ export const cancelOrder = async (req, res) => {
             message: 'Order cancelled and removed successfully'
         });
     } catch (error) {
-        console.error('Cancel order error:', error.message);
+        logger.error('OrderController', 'Cancel order error', error);
         res.status(500).json({
             success: false,
             message: 'Server error cancelling order',
@@ -284,7 +285,7 @@ export const getAllOrders = async (req, res) => {
             orders: populatedOrders
         });
     } catch (error) {
-        console.error('Get all orders error:', error.message);
+        logger.error('OrderController', 'Get all orders error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting orders',
@@ -446,7 +447,7 @@ export const createOrder = async (req, res) => {
             order
         });
     } catch (error) {
-        console.error('Create order error:', error.message);
+        logger.error('OrderController', 'Create order error', error);
         res.status(500).json({
             success: false,
             message: 'Server error creating order',
@@ -502,7 +503,7 @@ export const getOrderByIdAdmin = async (req, res) => {
             order: orderObj
         });
     } catch (error) {
-        console.error('Get order by ID (admin) error:', error.message);
+        logger.error('OrderController', 'Get order by ID (admin) error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting order',
@@ -564,13 +565,23 @@ export const updateOrderStatus = async (req, res) => {
         // Save the updated order
         await order.save();
 
+        // Log admin action
+        if (req.admin) {
+            logger.admin(
+                req.admin.id,
+                req.admin.email,
+                'UPDATE_ORDER_STATUS',
+                `Updated order ${orderId} status to ${status}, isPaid: ${isPaid}`
+            );
+        }
+
         res.json({
             success: true,
             message: 'Order status updated successfully',
             order
         });
     } catch (error) {
-        console.error('Update order status error:', error.message);
+        logger.error('OrderController', 'Update order status error', error);
         res.status(500).json({
             success: false,
             message: 'Server error updating order status',

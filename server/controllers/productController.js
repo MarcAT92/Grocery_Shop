@@ -1,5 +1,6 @@
 import {v2 as cloudinary} from 'cloudinary';
 import Product from '../models/productModel.js';
+import { logger } from '../utils/logger.js';
 
 // Add Product : /api/product/add
 // @route   POST /api/product/add
@@ -30,13 +31,18 @@ export const addProduct = async (req, res) => {
         // Create new product in database
         const product = await Product.create({...productData, image: imagesUrl});
 
+        // Log admin action
+        if (req.admin) {
+            logger.admin(req.admin.id, req.admin.email, 'ADD_PRODUCT', `Added product: ${product.name} (${product._id})`);
+        }
+
         res.status(201).json({
             success: true,
             message: "Product Added Successfully",
             product
         });
     } catch (error) {
-        console.error('Add product error:', error.message);
+        logger.error('ProductController', 'Add product error', error);
         res.status(500).json({
             success: false,
             message: 'Server error adding product',
@@ -80,7 +86,7 @@ export const productList = async (req, res) => {
             products
         });
     } catch (error) {
-        console.error('Get product list error:', error.message);
+        logger.error('ProductController', 'Get product list error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting products',
@@ -118,7 +124,7 @@ export const productById = async (req, res) => {
             product
         });
     } catch (error) {
-        console.error('Get product by ID error:', error.message);
+        logger.error('ProductController', 'Get product by ID error', error);
         res.status(500).json({
             success: false,
             message: 'Server error getting product',
@@ -162,13 +168,23 @@ export const changeStock = async (req, res) => {
             });
         }
 
+        // Log admin action
+        if (req.admin) {
+            logger.admin(
+                req.admin.id,
+                req.admin.email,
+                'UPDATE_PRODUCT_STOCK',
+                `Updated product stock: ${product.name} (${product._id}) - inStock: ${inStock}`
+            );
+        }
+
         res.json({
             success: true,
             message: "Product stock updated successfully",
             product
         });
     } catch (error) {
-        console.error('Change stock error:', error.message);
+        logger.error('ProductController', 'Change stock error', error);
         res.status(500).json({
             success: false,
             message: 'Server error updating product stock',
@@ -182,8 +198,8 @@ export const changeStock = async (req, res) => {
 // @access  Private (Admin only)
 export const updateProduct = async (req, res) => {
     try {
-        // Log the request body for debugging
-        console.log('Update product request body:', req.body);
+        // Log the request body for debugging in a structured format
+        logger.debug('ProductController', 'Update product request', { body: req.body });
 
         // Try to get ID from multiple possible sources
         let id = req.body.id;
@@ -196,7 +212,7 @@ export const updateProduct = async (req, res) => {
                 id = productData.id;
             }
         } catch (error) {
-            console.error('Error parsing productData:', error);
+            logger.error('ProductController', 'Error parsing productData', error);
             return res.status(400).json({
                 success: false,
                 message: 'Invalid product data format'
@@ -263,13 +279,23 @@ export const updateProduct = async (req, res) => {
             });
         }
 
+        // Log admin action
+        if (req.admin) {
+            logger.admin(
+                req.admin.id,
+                req.admin.email,
+                'UPDATE_PRODUCT',
+                `Updated product: ${updatedProduct.name} (${updatedProduct._id})`
+            );
+        }
+
         res.json({
             success: true,
             message: 'Product updated successfully',
             product: updatedProduct
         });
     } catch (error) {
-        console.error('Update product error:', error.message);
+        logger.error('ProductController', 'Update product error', error);
         res.status(500).json({
             success: false,
             message: 'Server error updating product',
@@ -302,12 +328,22 @@ export const deleteProduct = async (req, res) => {
             });
         }
 
+        // Log admin action
+        if (req.admin) {
+            logger.admin(
+                req.admin.id,
+                req.admin.email,
+                'DELETE_PRODUCT',
+                `Deleted product: ${product.name} (${product._id})`
+            );
+        }
+
         res.json({
             success: true,
             message: 'Product deleted successfully'
         });
     } catch (error) {
-        console.error('Delete product error:', error.message);
+        logger.error('ProductController', 'Delete product error', error);
         res.status(500).json({
             success: false,
             message: 'Server error deleting product',

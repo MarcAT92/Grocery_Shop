@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import connectDB from './configs/db.js';
 import connectCloudinary from './configs/cloudinary.js';
+import { logger } from './utils/logger.js';
 import 'dotenv/config';
 
 // Import routes
@@ -39,4 +40,7 @@ app.use('/api/address', addressRouter);
 app.use('/api/orders', orderRouter);
 
 // Start server
-app.listen(port, () => console.log(`Server is running on http://localhost:${port}`) )
+app.listen(port, () => {
+    logger.info('Server', `Server is running on http://localhost:${port}`);
+    logger.info('Server', `Environment: ${process.env.NODE_ENV || 'development'}`);
+})

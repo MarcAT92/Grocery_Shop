@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import Admin from '../models/adminModel.js';
+import { logger } from '../utils/logger.js';
 
 // Middleware to protect admin routes
 export const protectAdmin = async (req, res, next) => {
@@ -54,11 +55,17 @@ export const protectAdmin = async (req, res, next) => {
             });
         }
 
-        // Set admin in request object
-        req.admin = admin;
+        // Set admin in request object with full details for logging
+        req.admin = {
+            id: admin._id,
+            name: admin.name,
+            email: admin.email
+        };
+
+        logger.info('AdminAuth', `Admin ${admin.email} (${admin._id}) authenticated successfully`);
         next();
     } catch (error) {
-        console.error('Admin middleware error:', error);
+        logger.error('AdminAuth', 'Admin authentication failed', error);
         res.status(401).json({
             success: false,
             message: 'Not authorized, token failed',

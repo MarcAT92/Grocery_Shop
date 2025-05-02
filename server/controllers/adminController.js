@@ -1,5 +1,6 @@
 import Admin from '../models/adminModel.js';
 import jwt from 'jsonwebtoken';
+import { logger } from '../utils/logger.js';
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -39,6 +40,9 @@ export const adminLogin = async (req, res) => {
                 sameSite: 'strict'
             });
 
+            // Log successful login
+            logger.admin(admin._id, admin.email, 'LOGIN', 'Admin logged in successfully');
+
             // Return admin data (without password)
             res.json({
                 success: true,
@@ -50,13 +54,14 @@ export const adminLogin = async (req, res) => {
                 token
             });
         } else {
+            logger.warn('AdminAuth', `Failed login attempt for email: ${email}`);
             res.status(401).json({
                 success: false,
                 message: 'Invalid email or password'
             });
         }
     } catch (error) {
-        console.error('Admin login error:', error);
+        logger.error('AdminAuth', 'Admin login error', error);
         res.status(500).json({
             success: false,
             message: 'Server error during admin login',
@@ -71,6 +76,13 @@ export const adminLogin = async (req, res) => {
 // @route   POST /api/admin/logout
 // @access  Public
 export const adminLogout = (req, res) => {
+    // Log admin logout if admin info is available
+    if (req.admin) {
+        logger.admin(req.admin.id, req.admin.email, 'LOGOUT', 'Admin logged out');
+    } else {
+        logger.info('AdminAuth', 'Admin logout (admin info not available)');
+    }
+
     res.cookie('adminToken', '', {
         httpOnly: true,
         expires: new Date(0)
