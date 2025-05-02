@@ -127,6 +127,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Contact
 
-Your Name - [your.email@example.com](mailto:your.email@example.com)
+Porfolio - [https://marcathomas.netlify.app/]
 
-Project Link: [https://github.com/yourusername/grocery-shop](https://github.com/yourusername/grocery-shop)
+Project Link: [https://github.com/MarcAT92/Grocery_Shop]
