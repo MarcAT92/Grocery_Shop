@@ -46,9 +46,7 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
     addressLine1: '',
     addressLine2: '',
     city: '',
-    customCity: '',
     state: '',
-    customState: '',
     postalCode: '',
     country: 'Trinidad and Tobago', // Default to Trinidad and Tobago
     isDefault: false
@@ -61,13 +59,9 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
   // If editing an existing address, populate the form
   useEffect(() => {
     if (existingAddress) {
-      // Check if the city and state are in the predefined lists
+      // Set the country first
       const country = existingAddress.country || 'Trinidad and Tobago';
-      const cities = citiesByCountry[country] || [];
-      const states = statesByCountry[country] || [];
-
-      const cityInList = cities.includes(existingAddress.city);
-      const stateInList = states.includes(existingAddress.state);
+      const availableStatesList = statesByCountry[country] || [];
 
       setFormData({
         firstName: existingAddress.firstName || '',
@@ -75,20 +69,18 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
         phoneNumber: existingAddress.phoneNumber || '',
         addressLine1: existingAddress.addressLine1 || '',
         addressLine2: existingAddress.addressLine2 || '',
-        city: cityInList ? existingAddress.city : 'other',
-        customCity: !cityInList ? existingAddress.city : '',
-        state: stateInList ? existingAddress.state : 'other',
-        customState: !stateInList ? existingAddress.state : '',
+        city: existingAddress.city || '',
+        state: existingAddress.state || '',
         postalCode: existingAddress.postalCode || '',
         country: country,
         isDefault: existingAddress.isDefault || false
       });
 
       // Update available options based on country
-      setAvailableStates(states);
+      setAvailableStates(availableStatesList);
 
       // If state is selected, filter cities based on state
-      if (stateInList) {
+      if (existingAddress.state) {
         const stateCities = citiesByState[country][existingAddress.state] || [];
         setFilteredCities(stateCities);
       } else {
@@ -122,8 +114,6 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
         break;
 
       case 'state':
-        if (value === 'other') return; // Will be handled by custom input
-
         // Update state and reset city
         setFormData(prevData => ({
           ...prevData,
@@ -140,8 +130,6 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
         break;
 
       case 'city':
-        if (value === 'other') return; // Will be handled by custom input
-
         // Standard update for city
         setFormData(prevData => ({
           ...prevData,
@@ -179,35 +167,35 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
    * @returns {Object} Object containing validation result and error message
    */
   const validateAddressFields = () => {
-    const { country, city, state, customCity, customState } = formData;
+    const { country, city, state } = formData;
 
     // Required field validation
     if (!country) {
       return { isValid: false, message: 'Please select a country' };
     }
 
-    if (!city || (city === 'other' && !customCity)) {
+    if (!city) {
       return { isValid: false, message: 'Please provide a city' };
     }
 
-    if (!state || (state === 'other' && !customState)) {
+    if (!state) {
       return { isValid: false, message: 'Please provide a state/province' };
     }
 
     // Data consistency validation
-    const cityValid = city === 'other' || citiesByCountry[country]?.includes(city);
+    const cityValid = citiesByCountry[country]?.includes(city);
     if (!cityValid && citiesByCountry[country]?.length > 0) {
       return {
         isValid: false,
-        message: `The city you entered is not recognized for ${country}. Please select from the list or choose 'Other'.`
+        message: `The city you entered is not recognized for ${country}. Please select from the list.`
       };
     }
 
-    const stateValid = state === 'other' || statesByCountry[country]?.includes(state);
+    const stateValid = statesByCountry[country]?.includes(state);
     if (!stateValid && statesByCountry[country]?.length > 0) {
       return {
         isValid: false,
-        message: `The state/province you entered is not recognized for ${country}. Please select from the list or choose 'Other'.`
+        message: `The state/province you entered is not recognized for ${country}. Please select from the list.`
       };
     }
 
@@ -371,26 +359,10 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
                 {availableStates.map(state => (
                   <option key={state} value={state}>{state}</option>
                 ))}
-                <option value="other">Other (Not Listed)</option>
+
               </select>
 
-              {formData.state === 'other' && (
-                <input
-                  type="text"
-                  name="customState"
-                  value={formData.customState || ''}
-                  onChange={(e) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      customState: e.target.value,
-                      state: e.target.value // Update both fields
-                    }));
-                  }}
-                  required
-                  className="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  placeholder="Enter state/province name"
-                />
-              )}
+
             </div>
           ) : (
             <input
@@ -419,26 +391,10 @@ const AddressForm = ({ existingAddress = null, onSave, onCancel }) => {
                 {filteredCities.map(city => (
                   <option key={city} value={city}>{city}</option>
                 ))}
-                <option value="other">Other (Not Listed)</option>
+
               </select>
 
-              {formData.city === 'other' && (
-                <input
-                  type="text"
-                  name="customCity"
-                  value={formData.customCity || ''}
-                  onChange={(e) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      customCity: e.target.value,
-                      city: e.target.value // Update both fields
-                    }));
-                  }}
-                  required
-                  className="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  placeholder="Enter city name"
-                />
-              )}
+
             </div>
           ) : (
             <input

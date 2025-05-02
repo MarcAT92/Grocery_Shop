@@ -11,11 +11,28 @@ npm install
 
 2. Create a `.env` file in the server directory with the following variables:
 ```
-MONGODB_URI="your_mongodb_connection_string"
+# Required Variables
+# MongoDB Connection String
+MONGODB_URI="mongodb://localhost:27017/grocery_shop"
+
+# Clerk Authentication
 CLERK_SECRET_KEY="your_clerk_secret_key"
 
-# JWT Secret for admin authentication
+# JWT Secret for Admin Authentication
 JWT_SECRET="your_jwt_secret_key"
+
+# Optional Variables
+# Server Port (defaults to 4000)
+PORT=4000
+
+# Cloudinary Configuration for Image Storage
+CLOUDINARY_CLOUD_NAME="your_cloud_name"
+CLOUDINARY_API_KEY="your_api_key"
+CLOUDINARY_API_SECRET="your_api_secret"
+
+# Admin Credentials (used for initial setup)
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="secure_password"
 ```
 
 ## Running the Server
@@ -82,6 +99,33 @@ This runs the server without nodemon.
 
 **All routes are protected and require authentication:**
 - `POST /api/orders/create` - Create a new order using cart items and shipping address
+
+## Environment Variables Explained
+
+### Required Variables
+
+- `MONGODB_URI`: Connection string for your MongoDB database. This can be a local MongoDB instance or a MongoDB Atlas cluster.
+  - Example local: `mongodb://localhost:27017/grocery_shop`
+  - Example Atlas: `mongodb+srv://username:password@cluster.mongodb.net/grocery_shop?retryWrites=true&w=majority`
+
+- `CLERK_SECRET_KEY`: Your Clerk secret key for backend authentication verification. This is used to verify the JWT tokens issued by Clerk.
+  - Get this from your Clerk dashboard under API Keys.
+
+- `JWT_SECRET`: Secret key used for signing and verifying JWT tokens for admin authentication.
+  - This should be a long, random string. You can generate one using a tool like [randomkeygen.com](https://randomkeygen.com/).
+
+### Cloudinary Variables (Required for Image Upload)
+
+- `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name.
+- `CLOUDINARY_API_KEY`: Your Cloudinary API key.
+- `CLOUDINARY_API_SECRET`: Your Cloudinary API secret.
+  - Get these from your Cloudinary dashboard under Account Details.
+
+### Optional Variables
+
+- `PORT`: The port on which the server will run. Defaults to 4000 if not provided.
+
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD`: These are used for the initial admin account setup. If provided, the system will create an admin user with these credentials when it first starts up if no admin users exist in the database.
 
 ## Authentication
 
