@@ -61,6 +61,46 @@ npm run dev
 npm run dev
 ```
 
+## 👨‍💼 Admin Management
+
+The application includes several scripts for managing admin users:
+
+### Creating Admin Users
+
+```bash
+# From the server directory
+npm run admin:create
+```
+
+This interactive script will prompt you for the admin's name, email, and password.
+
+### Listing Admin Users
+
+```bash
+# From the server directory
+npm run admin:list
+```
+
+This script will display a list of all admin users in the database.
+
+### Editing Admin Users
+
+```bash
+# From the server directory
+npm run admin:edit
+```
+
+This interactive script will display a list of admin users and allow you to select one to edit. You can update the admin's name, email, and password.
+
+### Deleting Admin Users
+
+```bash
+# From the server directory
+npm run admin:delete
+```
+
+This interactive script will display a list of admin users and allow you to select one to delete.
+
 ## 🏗️ Project Structure
 
 ```

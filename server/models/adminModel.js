@@ -23,6 +23,10 @@ const adminSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    lastUpdated: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true
@@ -32,7 +36,7 @@ const adminSchema = new mongoose.Schema({
 adminSchema.pre('save', async function(next) {
     // Only hash the password if it's modified (or new)
     if (!this.isModified('password')) return next();
-    
+
     try {
         // Generate a salt
         const salt = await bcrypt.genSalt(10);

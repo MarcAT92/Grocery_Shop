@@ -33,7 +33,7 @@ const createAdmin = async () => {
 
     // Validate input
     if (!name || !email || !password) {
-      console.error('Error: All fields are required');
+      console.error('Error: Name, email, and password are required');
       process.exit(1);
     }
 
@@ -48,7 +48,8 @@ const createAdmin = async () => {
     const admin = await Admin.create({
       name,
       email,
-      password
+      password,
+      lastUpdated: new Date() // Set initial lastUpdated timestamp
     });
 
     console.log(`\nAdmin created successfully:`);

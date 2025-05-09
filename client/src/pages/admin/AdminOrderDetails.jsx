@@ -23,15 +23,27 @@ const AdminOrderDetails = () => {
 
             if (!token) {
                 toast.error('Authentication token not found. Please log in again.');
+                localStorage.removeItem('adminToken'); // Clear any invalid token
                 navigate('/admin/login');
                 return;
             }
 
-            console.log('Fetching order details with token:', token);
+            // Basic token validation
+            if (token.length < 10) {
+                toast.error('Invalid authentication token. Please log in again.');
+                localStorage.removeItem('adminToken'); // Clear the invalid token
+                navigate('/admin/login');
+                return;
+            }
+
+            // Use consistent token format with Bearer prefix
+            const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+
+            console.log('Fetching order details');
             const response = await fetch(`${apiUrl}/orders/admin/details/${id}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': token, // Send token directly without Bearer prefix
+                    'Authorization': formattedToken,
                     'Content-Type': 'application/json'
                 }
             });
@@ -47,8 +59,35 @@ const AdminOrderDetails = () => {
 
                 // If unauthorized, redirect to login
                 if (response.status === 401 || response.status === 403 || data.message?.includes('unauthorized') || data.message?.includes('token')) {
-                    localStorage.removeItem('adminToken');
-                    navigate('/admin/login');
+                    // Special handling for credential updates
+                    if (data.code === 'CREDENTIALS_UPDATED') {
+                        toast.error('Your admin credentials have been updated. Please log in again with your new credentials.', {
+                            duration: 8000, // Show for 8 seconds
+                            position: 'top-center',
+                            style: {
+                                background: '#FF4B4B',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                padding: '16px',
+                                borderRadius: '10px',
+                                fontSize: '16px',
+                                maxWidth: '500px',
+                            },
+                            id: 'credentials-updated', // Prevent duplicate toasts
+                        });
+
+                        // Clear token
+                        localStorage.removeItem('adminToken');
+
+                        // Small delay to ensure toast is visible before refresh
+                        setTimeout(() => {
+                            console.log('Refreshing page after credential update');
+                            window.location.href = '/admin/login'; // Force a full page refresh
+                        }, 1500); // Longer delay to ensure the message is seen
+                    } else {
+                        localStorage.removeItem('adminToken');
+                        navigate('/admin/login');
+                    }
                 } else {
                     navigate('/admin/orders');
                 }
@@ -82,11 +121,14 @@ const AdminOrderDetails = () => {
                 return;
             }
 
-            console.log('Updating order status with token:', token);
+            // Use consistent token format with Bearer prefix
+            const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+
+            console.log('Updating order status');
             const response = await fetch(`${apiUrl}/orders/admin/update-status`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': token, // Send token directly without Bearer prefix
+                    'Authorization': formattedToken,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -107,8 +149,35 @@ const AdminOrderDetails = () => {
 
                 // If unauthorized, redirect to login
                 if (response.status === 401 || response.status === 403 || data.message?.includes('unauthorized') || data.message?.includes('token')) {
-                    localStorage.removeItem('adminToken');
-                    navigate('/admin/login');
+                    // Special handling for credential updates
+                    if (data.code === 'CREDENTIALS_UPDATED') {
+                        toast.error('Your admin credentials have been updated. Please log in again with your new credentials.', {
+                            duration: 8000, // Show for 8 seconds
+                            position: 'top-center',
+                            style: {
+                                background: '#FF4B4B',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                padding: '16px',
+                                borderRadius: '10px',
+                                fontSize: '16px',
+                                maxWidth: '500px',
+                            },
+                            id: 'credentials-updated', // Prevent duplicate toasts
+                        });
+
+                        // Clear token
+                        localStorage.removeItem('adminToken');
+
+                        // Small delay to ensure toast is visible before refresh
+                        setTimeout(() => {
+                            console.log('Refreshing page after credential update');
+                            window.location.href = '/admin/login'; // Force a full page refresh
+                        }, 1500); // Longer delay to ensure the message is seen
+                    } else {
+                        localStorage.removeItem('adminToken');
+                        navigate('/admin/login');
+                    }
                 }
             }
         } catch (error) {
@@ -132,28 +201,40 @@ const AdminOrderDetails = () => {
     }, [id]);
 
     if (isLoading) {
-        return <Loader text="Loading order details..." />;
+        return (
+            <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
+                <div className="md:p-6 p-4 max-w-4xl mx-auto">
+                    <div className="flex justify-center items-center py-8 mt-2">
+                        <Loader text="Loading order details..." />
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (!order) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h2 className="text-xl font-medium text-gray-700 mb-2">Order Not Found</h2>
-                    <p className="text-gray-500 mb-6">The order you're looking for doesn't exist or has been removed.</p>
+            <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
+                <div className="md:p-6 p-4 max-w-4xl mx-auto">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h2 className="text-xl font-medium text-gray-700 mb-2">Order Not Found</h2>
+                            <p className="text-gray-500 mb-6">The order you're looking for doesn't exist or has been removed.</p>
+                        </div>
+                        <Link
+                            to="/admin/orders"
+                            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Orders
+                        </Link>
+                    </div>
                 </div>
-                <Link
-                    to="/admin/orders"
-                    className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Orders
-                </Link>
             </div>
         );
     }
@@ -216,17 +297,27 @@ const AdminOrderDetails = () => {
                             <div className="flex justify-end space-x-3">
                                 <button
                                     onClick={() => setShowStatusDialog(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
                                     disabled={isUpdating}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={updateOrderStatus}
-                                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors flex items-center justify-center min-w-[120px] cursor-pointer"
                                     disabled={isUpdating}
                                 >
-                                    {isUpdating ? 'Updating...' : 'Update Status'}
+                                    {isUpdating ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Updating...</span>
+                                        </>
+                                    ) : (
+                                        'Update Status'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -268,7 +359,7 @@ const AdminOrderDetails = () => {
 
                     <button
                         onClick={() => setShowStatusDialog(true)}
-                        className="mt-3 w-full py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                        className="mt-3 w-full py-2 cursor-pointer bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
                     >
                         Update Order Status
                     </button>

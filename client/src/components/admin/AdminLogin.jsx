@@ -39,12 +39,36 @@ const AdminLogin = () => {
                     // Store token in localStorage
                     localStorage.setItem('adminToken', data.token);
 
+                    // Store admin data in localStorage
+                    localStorage.setItem('adminData', JSON.stringify({
+                        id: data.admin._id,
+                        name: data.admin.name,
+                        email: data.admin.email
+                    }));
+
                     // Verify the token was stored correctly
                     const storedToken = localStorage.getItem('adminToken');
                     console.log('Stored token:', storedToken);
 
                     if (storedToken && storedToken === data.token) {
                         console.log('Admin token stored successfully');
+
+                        // Verify token format by checking for lastUpdated field
+                        try {
+                            // Decode the token (just the payload part)
+                            const tokenParts = storedToken.split('.');
+                            if (tokenParts.length === 3) {
+                                const payload = JSON.parse(atob(tokenParts[1]));
+                                console.log('Token payload verified:', payload.id ? 'Valid' : 'Invalid');
+
+                                if (!payload.lastUpdated) {
+                                    console.warn('Token missing lastUpdated field - may be using old format');
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Could not decode token for verification:', e);
+                        }
+
                         setIsAdmin(true);
                         // Navigation is handled by the useEffect below
                     } else {

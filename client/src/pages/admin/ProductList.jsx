@@ -125,7 +125,7 @@ const ProductTable = ({ products, currency, onToggleStock, loadingStates, onEdit
                                     <td className="px-4 py-4">
                                         <button
                                             onClick={() => onEditProduct(productId)}
-                                            className="text-blue-600 hover:text-blue-800 mr-3"
+                                            className="text-blue-600 hover:text-blue-800 mr-3 cursor-pointer"
                                             title="Edit product"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -232,6 +232,17 @@ const ProductList = () => {
             if (!token) {
                 toast.error('Authentication token not found. Please log in again.');
                 setLoadingStates(prev => ({ ...prev, [productId]: false }));
+                localStorage.removeItem('adminToken');
+                navigate('/admin/login');
+                return;
+            }
+
+            // Basic token validation
+            if (token.length < 10) {
+                toast.error('Invalid authentication token. Please log in again.');
+                setLoadingStates(prev => ({ ...prev, [productId]: false }));
+                localStorage.removeItem('adminToken');
+                navigate('/admin/login');
                 return;
             }
 
@@ -263,6 +274,39 @@ const ProductList = () => {
                 await fetchProducts();
             } else {
                 toast.error(data.message || 'Failed to update stock status');
+
+                // If unauthorized, redirect to login
+                if (response.status === 401 || response.status === 403 || data.message?.includes('unauthorized') || data.message?.includes('token')) {
+                    // Special handling for credential updates
+                    if (data.code === 'CREDENTIALS_UPDATED') {
+                        toast.error('Your admin credentials have been updated. Please log in again with your new credentials.', {
+                            duration: 8000, // Show for 8 seconds
+                            position: 'top-center',
+                            style: {
+                                background: '#FF4B4B',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                padding: '16px',
+                                borderRadius: '10px',
+                                fontSize: '16px',
+                                maxWidth: '500px',
+                            },
+                            id: 'credentials-updated', // Prevent duplicate toasts
+                        });
+
+                        // Clear token
+                        localStorage.removeItem('adminToken');
+
+                        // Small delay to ensure toast is visible before refresh
+                        setTimeout(() => {
+                            console.log('Refreshing page after credential update');
+                            window.location.href = '/admin/login'; // Force a full page refresh
+                        }, 1500); // Longer delay to ensure the message is seen
+                    } else {
+                        localStorage.removeItem('adminToken');
+                        navigate('/admin/login');
+                    }
+                }
             }
         } catch (error) {
             console.error('Error updating stock status:', error);
@@ -319,7 +363,7 @@ const ProductList = () => {
                         <p>{error}</p>
                         <button
                             onClick={handleRefresh}
-                            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark cursor-pointer"
                         >
                             Try Again
                         </button>

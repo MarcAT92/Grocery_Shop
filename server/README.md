@@ -168,3 +168,11 @@ npm run admin:delete
 ```
 
 This interactive script will display a list of admin users and allow you to select one to delete. Note that you cannot delete the last remaining admin user.
+
+### Editing Admin Users
+
+```
+npm run admin:edit
+```
+
+This interactive script will display a list of admin users and allow you to select one to edit. You can update the admin's name, email, and password. Leave any field empty to keep the current value.

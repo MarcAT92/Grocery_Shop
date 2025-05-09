@@ -8,7 +8,8 @@
     "server": "nodemon server.js",
     "admin:create": "node scripts/create-admin.js",
     "admin:list": "node scripts/list-admins.js",
-    "admin:delete": "node scripts/delete-admin.js"
+    "admin:delete": "node scripts/delete-admin.js",
+    "admin:edit": "node scripts/edit-admin.js"
   },
   "keywords": [],
   "author": "",
